@@ -294,7 +294,7 @@ void  searchingGoal(ros::NodeHandle node)
 
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "teleop");
+  ros::init(argc, argv, "lab4");
 
   ros::NodeHandle node;
   velocity_publisher = node.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
