@@ -217,10 +217,42 @@ BreakPointsExtractor::operator()(const std::vector<Point2D>& points) const
 
     if (GeomUtils::distance(points[0], points.back()) < m_localDistance)
     {
-        result.pop_back();
-        result.erase(result.begin());
-    }
+        const auto& frontMask = masks.front();
+        const auto& backMask = masks.back();
+        if (frontMask.size() == 1) {
+            result.erase(result.begin());
+        } else if (backMask.size() == 1) {
+            result.pop_back();
+        } else {
+            auto firstLines = extractLines(points, frontMask);
+            auto backLines = extractLines(points, backMask);
 
+            LineType firstLineType, lastLineType;
+            size_t firstLineBegin, firstLineEnd;
+            size_t lastLineBegin, lastLineEnd;
+            float firstMean, lastMean;
+            std::tie(firstLineType, firstLineBegin, firstLineEnd, firstMean) = firstLines.front();
+            std::tie(lastLineType, lastLineBegin, lastLineEnd, lastMean) = backLines.back();
+
+            if (firstLineType != lastLineType)
+            {
+                if (firstLineType == LineType::VERTICAL)
+                {
+                    result[0].x = firstMean;
+                    result[0].y = lastMean;
+                }
+                else
+                {
+                    result[0].x = lastMean;
+                    result[0].y = firstMean;
+                }
+            }
+            else
+            {
+                result.erase(result.begin());
+            }
+        }
+    }
 
     std::vector<Point2D> res;
     size_t base = result.size() - 1;

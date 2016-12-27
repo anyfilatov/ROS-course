@@ -34,7 +34,8 @@ Point2D rotate(const Point2D& point, float angle)
     float x = point.x;
     float y = point.y;
 
-    return {x * std::cos(angle) - y * std::sin(angle), x * std::sin(angle) + y * std::cos(angle)};
+    return {x * std::cos(angle) - y * std::sin(angle),
+            x * std::sin(angle) + y * std::cos(angle)};
 }
 
 void rotate(std::vector<Point2D>& points, float angle)

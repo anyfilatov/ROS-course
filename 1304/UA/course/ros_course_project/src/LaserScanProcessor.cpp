@@ -30,9 +30,11 @@ LaserScanProcessor::calculateCrumbSegmentsImpl(const std::vector<Point2D>& break
     {
         size_t previousPointIndex = stack[previousPoint];
         size_t currentPointIndex = stack[currentPoint];
-        if ((previousPointIndex < currentPointIndex && (currentPointIndex - previousPointIndex) != 1) ||
-            (previousPointIndex > currentPointIndex &&
-             (currentPointIndex + (breakPoints.size() - previousPointIndex)) != 1))
+        size_t distanse = (size_t) ((previousPointIndex < currentPointIndex) ?
+                                    std::abs(currentPointIndex - previousPointIndex) :
+                                    std::abs(currentPointIndex + (breakPoints.size() - previousPointIndex)));
+        ROS_DEBUG("DISTANCE i %zu %zu %zu %zu", breakPoints.size(), previousPointIndex, currentPointIndex, distanse);
+        if (distanse != 1)
         {
             const Point2D& pointA = breakPoints[currentPointIndex];
             const Point2D& pointB = breakPoints[previousPointIndex];
@@ -54,16 +56,16 @@ LaserScanProcessor::calculateCrumbSegments(const std::vector<Point2D>& breakPoin
                                  (closestPointIndex == breakPoints.size() - 1) ? 0 : closestPointIndex + 1};
 
 
-    for (size_t i = 2; i < breakPoints.size(); ++i)
+    for (size_t i = 2; i < breakPoints.size() + 2; ++i)
     {
         size_t index = (closestPointIndex + i) % breakPoints.size();
         const Point2D& pointA = breakPoints[stack[stack.size() - 2]];
         const Point2D& pointB = breakPoints[stack[stack.size() - 1]];
-        const Point2D& pointC = breakPoints[i];
+        const Point2D& pointC = breakPoints[index];
 
         if (cross_product(pointA, pointB, pointC) >= 0.f)
         {
-            stack.emplace_back(i);
+            stack.emplace_back(index);
         }
         else
         {
@@ -77,12 +79,25 @@ LaserScanProcessor::calculateCrumbSegments(const std::vector<Point2D>& breakPoin
                     {
                         std::swap(stack[stack.size() - 1], stack[j + 1]);
                         stack.resize(j + 2);
-                        stack.emplace_back(i);
+                        stack.emplace_back(index);
                         break;
                     }
                 }
             }
         }
+    }
+    if (stack[1] == stack.back())
+    {
+        stack.pop_back();
+    }
+    if (stack[0] == stack.back())
+    {
+        stack.pop_back();
+    }
+    if (stack[0] == stack[stack.size() - 2])
+    {
+        stack.pop_back();
+        stack.pop_back();
     }
 
     return calculateCrumbSegmentsImpl(breakPoints, stack);
@@ -140,13 +155,13 @@ LaserScanProcessor::calculateBreakPointIndexes(const sensor_msgs::LaserScan& las
     std::vector<size_t> indexes = {0, 1};
 
     Line previousLine{points[0], points[1]};
-    ROS_INFO("Line k: %f b: %f", previousLine.k, previousLine.b);
+    ROS_DEBUG("Line k: %f b: %f", previousLine.k, previousLine.b);
 
     for (size_t i = 2; i < ranges.size(); ++i)
     {
         Point2D point = GeomUtils::calculatePoint(ranges[i], laserScan.angle_min + i * laserScan.angle_increment);
         Line nextLine{points[points.size() - 2], point};
-        ROS_INFO("Line k: %f z: %f", nextLine.k, nextLine.b);
+        ROS_DEBUG("Line k: %f z: %f", nextLine.k, nextLine.b);
         if (std::abs(GeomUtils::cross_product(points[points.size() - 2],
                                               points[points.size() - 1],
                                               point)) < 0.01f || previousLine == nextLine)
@@ -188,7 +203,6 @@ LaserScanProcessor::calculateBreakPointIndexes(const sensor_msgs::LaserScan& las
 }
 
 std::vector<LaserScanProcessor::Segment>
-// LaserScanProcessor::extractCrumbsSegments(const sensor_msgs::LaserScan& laserScan) const
 LaserScanProcessor::extractCrumbsSegments(const std::vector<Point2D>& breakPoints) const
 {
 

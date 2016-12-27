@@ -58,10 +58,19 @@ public:
 
     float getAngleToTarget(const Point2D& targetPosition) const
     {
-        float dx = (float) (targetPosition.x - m_currentPosition.x);
-        float dy = (float) (targetPosition.y - m_currentPosition.y);
-        float angle = (float) (atan2(dy, dx) - m_currentAngle);
+        float dx = targetPosition.x - m_currentPosition.x;
+        float dy = targetPosition.y - m_currentPosition.y;
 
+        float targetAngle = (float) atan2(dy, dx);
+        float currentAngle = m_currentAngle;
+
+        float angle = (targetAngle - currentAngle);
+        while (angle < -M_PI)
+        { angle += 2.f * M_PI; }
+        while (angle > M_PI)
+        { angle -= 2.f * M_PI; }
+
+        ROS_INFO("Ag %f %f %f", targetAngle, currentAngle, angle);
         return angle;
     }
 

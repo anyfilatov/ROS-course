@@ -24,7 +24,7 @@ define erratic position
   origin [0.000 0.000 0.000 0.000]
   gui_nose 1
   drive "diff"
-  topurg(pose [ 0.050 0.000 0.0 0.0 ])
+  topurg(pose [ 0.000 0.000 0.0 0.0 ])
 )
 
 define floorplan model
@@ -63,7 +63,10 @@ window
 
 # load an environment bitmap
 floorplan
-( 
+(
+  boundary 0
+  gui_move 1
+  laser_return 1
   name "world"
   bitmap "my_world.png"
   size [20.000 20.000 1.0]
@@ -71,4 +74,4 @@ floorplan
 )
 
 # throw in a robot
-erratic( pose [ -7 -7 0.000 0.000 ] color "blue")
+erratic( pose [ 0 -7 0.000 0.000 ] color "blue")

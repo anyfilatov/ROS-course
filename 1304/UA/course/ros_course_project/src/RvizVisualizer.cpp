@@ -10,7 +10,7 @@ RvizVisualizer::RvizVisualizer(ros::NodeHandle& nodeHandle, const std::string& n
 void RvizVisualizer::publishMarker(const std::string& name, const std::vector<Point2D>& points, size_t markerType)
 {
     visualization_msgs::Marker marker;
-    marker.header.frame_id = "/odom";
+    marker.header.frame_id = "/map";
     marker.header.stamp = ros::Time::now();
     marker.ns = name;
     marker.action = visualization_msgs::Marker::ADD;
@@ -22,7 +22,7 @@ void RvizVisualizer::publishMarker(const std::string& name, const std::vector<Po
     {
         marker.type = visualization_msgs::Marker::POINTS;
     }
-    else if (markerType == 1)
+    else if (markerType == 1 || markerType == 2)
     {
         marker.type = visualization_msgs::Marker::LINE_STRIP;
     }
@@ -39,12 +39,14 @@ void RvizVisualizer::publishMarker(const std::string& name, const std::vector<Po
         markerPoint.y = point.y;
         marker.points.push_back(markerPoint);
     }
-    if (markerType == 0) {
+    if (markerType == 0)
+    {
         markerPoint.x = 0;
         markerPoint.y = 0;
         marker.points.push_back(markerPoint);
     }
-    if (markerType == 1) {
+    if (markerType == 1)
+    {
         marker.points.emplace_back(marker.points.front());
     }
     m_markerPublisher.publish(marker);
