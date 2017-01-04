@@ -1,0 +1,10 @@
+real	1	-15	0	0	barca
+real	2	-10	2	0	barca
+real	3	-10	-2	0	barca
+real	4	-5	0	0	barca
+real	5	-2	0	0	barca
+barca	1	15	0	0	real
+barca	2	10	2	0	real
+barca	3	10	-2	0	real
+barca	4	5	0	0	real
+barca	5	2	0	0	real
