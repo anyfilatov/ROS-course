@@ -1,0 +1,2 @@
+set(RobotsBattle_MESSAGE_FILES "/home/maksim/ClionProjects/RobotsBattle/msg/TargetCoordinates.msg")
+set(RobotsBattle_SERVICE_FILES "")
