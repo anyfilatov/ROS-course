@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+  <name>writer</name>
+  <version>0.0.0</version>
+  <description>The writer package</description>
+
+  <maintainer email="imhoisi@todo.todo">imhoisi</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>message</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>message</run_depend>
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>
