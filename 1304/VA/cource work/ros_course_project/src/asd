@@ -1,0 +1,127 @@
+#include <ros/ros.h>
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Pose2D.h>
+#include <sensor_msgs/LaserScan.h>
+#include <tf/LinearMath/Quaternion.h>
+#include <tf/transform_datatypes.h>
+#include <visualization_msgs/Marker.h>
+#include <RobotController.h>
+#include <RvizVisualizer.h>
+#include <LaserScanProcessor.h>
+#include <BreakPointsExtractor.h>
+
+GeomUtils::Point2D
+getNextTarget(const std::vector<GeomUtils::Segment>& crumbSegments, RvizVisualizer* visualizer = nullptr)
+{
+    std::vector<GeomUtils::Point2D> crumbPoints;
+    for (const auto& segment : crumbSegments)
+    {
+        crumbPoints.emplace_back((segment.first.x + segment.second.x) / 2.f,
+                                 (segment.first.y + segment.second.y) / 2.f);
+        ROS_DEBUG("Crumb point x: %f y: %f", crumbPoints.front().x, crumbPoints.front().y);
+    }
+    if (visualizer)
+    {
+        visualizer->publishMarker("cumber_markers", crumbPoints);
+    }
+
+    std::uniform_int_distribution<size_t> rd(0, (int) crumbPoints.size());
+    GeomUtils::Point2D currentPoint = crumbPoints[0];
+
+    std::vector<GeomUtils::Point2D> target;
+    target.push_back(currentPoint);
+    if (visualizer)
+    {
+        visualizer->publishMarker("target", target, 0);
+    }
+    return currentPoint;
+}
+
+int main(int argc, char** argv)
+{
+    if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info))
+    {
+        ros::console::notifyLoggerLevelsChanged();
+    }
+
+    using GeomUtils::Point2D;
+
+    ros::init(argc, argv, "explorer");
+
+    ros::NodeHandle nodeHandle;
+
+    RvizVisualizer visualizer(nodeHandle, "explorer");
+    LaserScanProcessor scanProcessor(&visualizer);
+    RobotController explorer(nodeHandle);
+    BreakPointsExtractor breakPointsExtractor;
+
+    ros::Rate r(60);
+
+    Point2D currentPoint;
+
+    size_t step = 0;
+    while (ros::ok())
+    {
+        const Point2D& currentPosition = explorer.getCurrentPosition();
+        ROS_DEBUG("Current position{x: %f y: %f theta: %f diff: %f dist: %f}",
+                  currentPosition.x,
+                  currentPosition.y,
+                  explorer.getCurrentAngle(),
+                  explorer.getAngleToTarget(currentPoint),
+                  explorer.getDistanceToTarget(currentPoint));
+
+
+        if (explorer.haveNewLaserScan())
+        {
+            if (step % 10 == 0)
+            {
+                auto points = scanProcessor.calculatePoints(explorer.getLaserScan());
+
+                GeomUtils::rotate(points, -explorer.getCurrentAngle());
+                visualizer.publishMarker("base_mark", points);
+                for (const auto& point : points)
+                {
+                    ROS_DEBUG("Base point x: %f y: %f", point.x, point.y);
+                }
+
+                auto breakPoints = breakPointsExtractor(points);
+                visualizer.publishMarker("sorted_markers", breakPoints, 1);
+                visualizer.publishMarker("sorted_markers_points", breakPoints, 0);
+                for (auto& point : breakPoints)
+                {
+                    ROS_DEBUG("Break point x: %f y: %f", point.x, point.y);
+                }
+
+                const auto crumbSegments = scanProcessor.extractCrumbsSegments(breakPoints);
+
+                auto crumbPoint = getNextTarget(crumbSegments, &visualizer);
+
+                crumbPoint = GeomUtils::rotate(crumbPoint, explorer.getCurrentAngle());
+                //crumbPoint += explorer.getCurrentPosition();
+
+                ROS_INFO("crumbPoint %f %f", crumbPoint.x, crumbPoint.y);
+                ROS_INFO("crumbPoint %f %f", explorer.getCurrentPosition().x, explorer.getCurrentPosition().y);
+                if (std::abs(explorer.getAngleToTarget(crumbPoint)) < 0.1f)
+                {
+                    explorer.moveForward(0.1f);
+                }
+                else if (explorer.getAngleToTarget(crumbPoint) < 0.1f)
+                {
+                    explorer.rotate(-0.5f);
+                }
+                else
+                {
+                    explorer.rotate(0.5f);
+                }
+
+                ROS_INFO("Done");
+            }
+        }
+
+        ros::spinOnce();
+        ++step;
+        r.sleep();
+    }
+
+    return 0;
+}
