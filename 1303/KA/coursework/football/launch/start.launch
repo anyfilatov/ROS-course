@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="football" type="ball"
+          args="" name="ball" output="screen"/>
+
+    <node pkg="football" type="arbiter"
+          args="real barca" name="arbiter" />
+
+    <node pkg="football" type="footballer"
+          args="real 1 navas" name="footballer_navas"  output="screen"/>
+
+    <node pkg="football" type="footballer"
+          args="real 2 pepe" name="footballer_pepe" />
+
+    <node pkg="football" type="footballer"
+          args="real 3 ramos" name="footballer_ramos" />
+
+    <node pkg="football" type="footballer"
+          args="real 4 bale" name="footballer_bale" />
+
+    <node pkg="football" type="footballer"
+          args="real 5 ronaldo" name="footballer_ronaldo" output="screen"/>
+
+
+
+
+    <node pkg="football" type="footballer"
+          args="barca 1 masip" name="footballer_masip"  output="screen"/>
+
+    <node pkg="football" type="footballer"
+          args="barca 2 pike" name="footballer_pike" />
+
+    <node pkg="football" type="footballer"
+          args="barca 3 alba" name="footballer_alba" />
+
+    <node pkg="football" type="footballer"
+          args="barca 4 turan" name="footballer_turan" />
+
+    <node pkg="football" type="footballer"
+          args="barca 5 messi" name="footballer_messi" output="screen" />
+
+</launch>
