@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package>
+  <name>gazebo_lab</name>
+  <version>0.0.0</version>
+  <description>The gazebo_lab package</description>
+  <maintainer email="dima6120@gmail.com">dima6120</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>gazebo_ros</build_depend>
+  <build_depend>roscpp</build_depend>
+  <run_depend>gazebo_ros</run_depend>
+  <run_depend>roscpp</run_depend>
+  <build_depend>tf</build_depend>
+  <run_depend>tf</run_depend>
+</package>
