@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package>
+    <name>1</name>
+    <version>1.0.0</version>
+    <description>This package contains node which sends commands to turtlesim_node</description>
+    <maintainer email="dmz64@---yandex.ru">Dmitry Zykov</maintainer>
+    <license>GPL</license>
+    <build_depend>roscpp</build_depend>
+    <build_depend>geometry_msgs</build_depend>
+    <buildtool_depend>catkin</buildtool_depend>
+    <run_depend>roscpp</run_depend>
+    <run_depend>geometry_msgs</run_depend>
+    <export>
+    </export>
+</package>
