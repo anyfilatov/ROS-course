@@ -1,0 +1,6 @@
+#!/bin/sh
+# Lab1 runner
+catkin_workspace=/home/saydos/Desktop/ros/catkin_ws
+gnome-terminal --window -e "/bin/bash -c 'roscore; exec /bin/bash -i'"
+gnome-terminal --window -e "/bin/bash -c 'cd $catkin_workspace; source ./devel/setup.sh; rosrun turtlesim turtlesim_node; rosrun exec /bin/bash -i'"
+gnome-terminal --window -e "/bin/bash -c 'cd $catkin_workspace; source ./devel/setup.sh; rosrun ros_lab1 turtle_node; rosrun exec /bin/bash -i'"
