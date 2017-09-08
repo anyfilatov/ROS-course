@@ -1,2 +1,0 @@
-set(RobotsBattle_MESSAGE_FILES "msg/TargetCoordinates.msg")
-set(RobotsBattle_SERVICE_FILES "")

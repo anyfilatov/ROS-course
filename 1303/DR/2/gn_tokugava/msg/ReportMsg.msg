@@ -1,2 +1,0 @@
-string author
-string content

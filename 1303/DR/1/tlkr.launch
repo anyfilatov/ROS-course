@@ -1,4 +1,0 @@
-  <launch>
-    <node pkg="turtlesim" type="turtlesim_node" name="sim"/>
-    <node pkg="talker" type="tlkr" args="/turtle1" name="turtle1_tf_broadcaster" />
-  </launch>
