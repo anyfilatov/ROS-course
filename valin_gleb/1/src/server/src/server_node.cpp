@@ -110,13 +110,13 @@ class Hero : public Drawable
     std::tuple<int, int> getPos() { return std::make_tuple(x, y); }
 };
 
-class Game : Drawable
+class Game : public Drawable
 {
     Map map;
     std::unique_ptr<Hero> hero;
 
   public:
-    Game() : map()
+    Game()
     {
         hero.reset(new Hero(map.getSpawnPos()));
     }
@@ -159,7 +159,9 @@ int main(int argc, char **argv)
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
+            {
                 window.close();
+            }
         }
 
         window.clear(sf::Color::Red);
