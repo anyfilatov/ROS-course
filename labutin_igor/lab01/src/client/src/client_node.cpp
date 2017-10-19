@@ -19,16 +19,16 @@ int getch() {
 }
 
 int main(int argc, char ** argv) {
-	ros::init(argc, argv, "client");
-	ros::NodeHandle nodeHandle;
-	ros::Publisher pub1isher = nodeHandle.advertise<client::PressedKey>("/lab01/listener", 10);
+  ros::init(argc, argv, "client");
+  ros::NodeHandle nodeHandle;
+  ros::Publisher pub1isher = nodeHandle.advertise<client::PressedKey>("/lab01/listener", 10);
 
-	while (true) {
-		char key = getch();
-		client::PressedKey msg;
-		msg.key = key;
-		pub1isher.publish(msg);
-	}
+  while (true) {
+    char key = getch();
+    client::PressedKey msg;
+    msg.key = key;
+    pub1isher.publish(msg);
+  }
 
-	return 0;
+  return 0;
 }
