@@ -123,8 +123,6 @@ class Game : public Drawable
 
     void on_control(const client::Direction &msg)
     {
-        ROS_INFO("CB!");
-
         std::tuple<int, int> pos = hero->getPos();
         pos = std::make_tuple(std::get<0>(pos) + msg.dx, std::get<1>(pos) + msg.dy);
 
