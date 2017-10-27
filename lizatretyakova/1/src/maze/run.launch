@@ -1,0 +1,4 @@
+<launch>
+<node pkg="maze" type="driver" name="driver1" output="screen"/>
+<node pkg="maze" type="executor" name="executor1" output="screen"/>
+</launch>
