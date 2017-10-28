@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
                         // arrow left
                         ROS_INFO("[arrow left]");
                         msg.data.push_back(0);
-                        msg.data.push_back(1);
+                        msg.data.push_back(-1);
                         break;
                 }
                 driver_pub.publish(msg);
