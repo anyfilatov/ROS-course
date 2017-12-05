@@ -1,0 +1,51 @@
+<launch>
+	<node pkg="rod" type="model" name="world">
+		<param name="attached" type="string" value="m1"/>
+	</node>
+
+	<node pkg="rod" type="model" name="m1">
+		<param name="attached" type="string" value="m2"/>
+	</node>
+	
+	<node pkg="rod" type="model" name="m2">
+		<param name="attached" type="string" value="m3"/>
+	</node>
+	
+	<node pkg="rod" type="model" name="m3">
+		<param name="attached" type="string" value="m4"/>
+	</node>
+
+	<node pkg="rod" type="model" name="m4">
+		<param name="attached" type="string" value="m5"/>
+	</node>
+
+	<node pkg="rod" type="model" name="m5">
+	</node>
+
+
+	<node pkg="rod" type="view" name="v1">
+		<param name="model" type="string" value="m1"/>
+		<param name="id" type="int" value="1"/>
+	</node>
+
+	<node pkg="rod" type="view" name="v2">
+		<param name="model" type="string" value="m2"/>
+		<param name="id" type="int" value="2"/>
+	</node>
+
+	<node pkg="rod" type="view" name="v3">
+		<param name="model" type="string" value="m3"/>
+		<param name="id" type="int" value="3"/>
+	</node>
+
+	<node pkg="rod" type="view" name="v4">
+		<param name="model" type="string" value="m4"/>
+		<param name="id" type="int" value="4"/>
+	</node>
+
+	<node pkg="rod" type="view" name="v5">
+		<param name="model" type="string" value="m5"/>
+		<param name="id" type="int" value="5"/>
+	</node>
+
+</launch>
