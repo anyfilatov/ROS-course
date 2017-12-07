@@ -1,5 +1,5 @@
 <launch>
-	<node pkg="rod" type="model" name="world">
+	<node pkg="rod" type="model" name="map">
 		<param name="attached" type="string" value="m1"/>
 	</node>
 
@@ -47,5 +47,7 @@
 		<param name="model" type="string" value="m5"/>
 		<param name="id" type="int" value="5"/>
 	</node>
+
+	<node pkg="rviz" type="rviz" name="rviz"/>
 
 </launch>
