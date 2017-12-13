@@ -1,0 +1,34 @@
+<launch>
+  <node name="stick01" pkg="lab02" type="lab02_stick" output="screen">
+    <param name="frame" value="world" type="string" />
+  </node>
+  <node name="stick_visualizer01" pkg="lab02" type="lab02_stick_visualizer" output="screen">
+    <param name="frame" value="stick01" type="string" />
+  </node>
+
+  <node name="stick02" pkg="lab02" type="lab02_stick" output="screen">
+    <param name="frame" value="stick01/top" type="string" />
+    <param name="length" value="0.6" type="double" />
+  </node>
+  <node name="stick_visualizer02" pkg="lab02" type="lab02_stick_visualizer" output="screen">
+    <param name="frame" value="stick02" type="string" />
+  </node>
+
+  <node name="stick03" pkg="lab02" type="lab02_stick" output="screen">
+    <param name="frame" value="stick02/top" type="string" />
+    <param name="length" value="0.2" type="double" />
+  </node>
+  <node name="stick_visualizer03" pkg="lab02" type="lab02_stick_visualizer" output="screen">
+    <param name="frame" value="stick03" type="string" />
+  </node>
+
+
+  <node name="stick04" pkg="lab02" type="lab02_stick" output="screen">
+    <param name="frame" value="stick03/top" type="string" />
+  </node>
+  <node name="stick_visualizer04" pkg="lab02" type="lab02_stick_visualizer" output="screen">
+    <param name="frame" value="stick04" type="string" />
+  </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find lab02)/config.rviz"/>
+</launch>
