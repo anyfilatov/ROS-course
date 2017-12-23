@@ -22,7 +22,7 @@ int main( int argc, char** argv )
     id_str_in >> id;
 
     ros::NodeHandle n;
-    ros::Rate r(10);
+    ros::Rate r(30);
     ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 
     // Set our initial shape type to be a cube

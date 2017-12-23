@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
 
     tf::TransformBroadcaster br;
     tf::Transform transform;
-    ros::Rate rate(10.0);
+    ros::Rate rate(30);
 
     while (node.ok()){
         transform.setOrigin(axis_main);
