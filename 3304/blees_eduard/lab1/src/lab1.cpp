@@ -13,7 +13,6 @@ int main(int argc, char **argv)
     std::srand(unsigned(std::time(0)));
     for (int i = 0; i < 20; i++)
     {
-        std::rand()
 		geometry_msgs::Twist msg;
 		msg.linear.x = std::rand() / RAND_MAX > 0.5 ? 1 : -1;
 		msg.angular.z = std::rand() / RAND_MAX > 0.5 ? 1 : -1;
