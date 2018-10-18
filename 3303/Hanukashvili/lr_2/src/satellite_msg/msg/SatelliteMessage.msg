@@ -1,0 +1,1 @@
+string sat_msg
