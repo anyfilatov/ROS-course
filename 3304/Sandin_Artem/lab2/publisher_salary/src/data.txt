@@ -1,0 +1,9 @@
+Ivanov 2900
+Perov 1211
+Sidoriov 900
+Ivanovich 1100
+Perovich 1111
+Sidoriovich 800
+Ivanenko 1101
+Pupa 1011
+Sidoriyako 2000
