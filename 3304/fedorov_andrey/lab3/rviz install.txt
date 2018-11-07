@@ -1,0 +1,6 @@
+sudo rm /var/lib/dpkg/lock
+sudo dpkg --configure -a
+sudo apt-get install ros-kinetic-rviz
+sudo add-apt-repository ppa:ubuntu-x-swat/updates
+sudo apt-get update
+sudo apt-get dist-upgrade
