@@ -1,0 +1,5 @@
+<launch>
+	<node pkg="rviz" type="rviz" name="rviz"/>
+ 	<node pkg="my_robots" type="helper" name="helper"  output="screen"/>
+	<node pkg="my_robots" type="lost" name="lost"  output="screen"/>
+</launch>
