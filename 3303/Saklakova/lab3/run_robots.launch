@@ -1,0 +1,5 @@
+<launch>
+<node pkg="rviz" type="rviz" name="rviz"/>
+<node pkg="lab3" type="lost" name="lost"/>
+<node pkg="lab3" type="assis" name="assis"/>
+</launch>
