@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+  <name>scout</name>
+  <version>1.0.0</version>
+  <description>The scout package</description>
+
+  <maintainer email="user@todo.todo">user</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>scout_message</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>scout_message</run_depend>
+</package>
