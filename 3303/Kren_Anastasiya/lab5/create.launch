@@ -1,0 +1,18 @@
+<launch>
+    
+    <!-- Use the empty_world.launch as a base and load create.world -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find simple_test)/create.world"/>
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <!-- Spawn the create by its URDF -->
+    <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" 
+        args="-sdf -file $(find simple_test)/create.sdf -x 0 -y 0 -z 0 -model create" />
+    <node name="spawn_model2" pkg="gazebo_ros" type="spawn_model" 
+        args="-sdf -file $(find simple_test)/create2.sdf -x 6 -y 6 -z 0 -model create2" />
+</launch>
