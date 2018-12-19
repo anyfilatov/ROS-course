@@ -15,6 +15,9 @@ private:
     ros::Rate& m_rate;
     ros::Publisher m_gazebo_publisher;
 
+    tf::TransformBroadcaster tf_broadcaster;
+    tf::Transform transform;
+
     std::string m_name;
 
     gazebo_msgs::ModelState m_state_msg;
@@ -101,6 +104,10 @@ private:
     {
         while (!canceled)
         {
+            transform.setOrigin(tf::Vector3(m_x, m_y, m_z));
+            transform.setRotation(tf::Quaternion(0, 0, 0, 1));
+            tf_broadcaster.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", m_name));
+
             if (m_x != x && m_y != y && m_z != z)
             {
                 float dx = fabs(x - m_x) / 1000;
