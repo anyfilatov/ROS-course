@@ -4,8 +4,11 @@
 #include "utility.h"
 #include "gazebo_msgs/SpawnModel.h"
 #include "gazebo_msgs/ModelState.h"
+#include <std_msgs/String.h>
+
 
 void pub_marker(const ros::Publisher &pub, float x, float y, float angle);
+void pub_found_topic(const ros::Publisher &pub);
 
 enum class HelperState
 {
@@ -40,6 +43,9 @@ int main(int argc, char *argv[])
     ros::Publisher pub =
         nh.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 10, true);
 
+    ros::Publisher pub_found =
+        nh.advertise<std_msgs::String>("/found_topic", 10);
+
     ROS_INFO_STREAM("helper started");
 
     std::string base_frame_id = "world";
@@ -53,8 +59,6 @@ int main(int argc, char *argv[])
     float speed_y = 0.0;
     float angle = 0.0;
     float distance = 0.0;
-    // float x = -10.0;
-    // float y = -5.0;
     float x = exit_x;
     float y = exit_y;
     HelperState state = HelperState::Chase;
@@ -76,11 +80,12 @@ int main(int argc, char *argv[])
                 }
                 catch (const tf::TransformException &e)
                 {
+                    r.sleep();
                     continue;
                 }
 
-                distance = range(x, y, lx, ly);
-                angle = calcAngle(lx - x, ly - y);
+                distance = range(x, y, lx + x, ly + x);
+                angle = calcAngle(lx, ly);
                 if (distance > 1.5)
                 {
                     speed_x = max_speed * cos(angle);
@@ -96,9 +101,12 @@ int main(int argc, char *argv[])
             {
                 distance = range(x, y, exit_x, exit_y);
                 angle = calcAngle(exit_x - x, exit_y - y);
-                if (distance < 1.0)
+                if (distance < 2.0)
                 {
                     state = HelperState::AtExit;
+                    std_msgs::String msg;
+                    msg.data = std::string("I'm at the exit");
+                    pub_found.publish(msg);
                     break;
                 }
                 speed_x = max_speed * cos(angle);
@@ -107,14 +115,16 @@ int main(int argc, char *argv[])
             }
             case HelperState::AtExit:
             {
-                break;
+                speed_x = 0;
+                speed_y = 0;
             }
         }
 
         x += speed_x * dt;
         y += speed_y * dt;
-        pub_marker(pub, frame_id, x, y, angle);
+        pub_marker(pub, x, y, angle);
         r.sleep();
+        ros::spinOnce();
     }
 
     ROS_INFO_STREAM("helper finished");
