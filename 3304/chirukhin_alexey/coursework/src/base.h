@@ -15,6 +15,10 @@
 class Base
 {
 private:
+	static const int height = 4;
+	static const int gridDimention = 5;
+	static const int pauseMicroseconds = 200000;
+
 	enum cellStatus
 	{
 		UNSET,
@@ -23,10 +27,9 @@ private:
 	};
 
 	int counter = 0;
-    cellStatus grid[3][3];
+    cellStatus grid[gridDimention][gridDimention];
 	std::vector<Robot*> robots;
-	ros::NodeHandle n;
-	static const int height = 10;
+	ros::NodeHandle n;	
 public:
     Base()
     {
@@ -50,7 +53,7 @@ public:
 			grid[std::get<0>(cell)][std::get<1>(cell)] = cellStatus::INPROCESS;
 
 			ros::Duration(1, 0).sleep();
-			usleep(1000000);
+			usleep(pauseMicroseconds);
 		}
     }
 private:
@@ -83,9 +86,9 @@ private:
 
 	std::tuple<short, short> getFreePosition()
 	{
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < gridDimention; i++)
 		{
-			for (int j = 0; j < 3; j++)
+			for (int j = 0; j < gridDimention; j++)
 			{
 				if (grid[i][j] == cellStatus::UNSET)
 				{
@@ -98,9 +101,9 @@ private:
 
 	void setGrid()
 	{
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < gridDimention; i++)
 		{
-			for (int j = 0; j < 3; j++)
+			for (int j = 0; j < gridDimention; j++)
 			{
 				grid[i][j] = cellStatus::UNSET;
 			}
@@ -109,9 +112,9 @@ private:
 
 	bool isGridDone()
 	{
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < gridDimention; i++)
 		{
-			for (int j = 0; j < 3; j++)
+			for (int j = 0; j < gridDimention; j++)
 			{
 				if (grid[i][j] != cellStatus::FILLED)
 				{
@@ -124,12 +127,14 @@ private:
 
 	int cellIndexToCoordinate(short cellIndex)
 	{
-		return -5 + 5*cellIndex;
+		// cellIndex - 1; if gridDimention == 3
+		return cellIndex - 2;
 	}
 
 	short coordinateToCellIndex(int coordinate)
 	{
-		return (short)((coordinate + 5)/5);
+		// (short)(coordinate + 1); if gridDimention == 3
+		return (short)(coordinate + 2);
 	}
 };
 
