@@ -10,7 +10,8 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include<functional>
+#include <functional>
+#include <unistd.h>
 
 class Base
 {
@@ -26,6 +27,7 @@ private:
     cellStatus grid[3][3];
 	std::vector<std::reference_wrapper<Robot>> robots;
 	ros::NodeHandle n;
+	static const int height = 10;
 public:
     Base()
     {
@@ -38,7 +40,7 @@ public:
 
     void defendPlanet()
     {
-		while (!isGridDone())
+		while (true)
 		{
 			update();
 			auto cell = getFreePosition();
@@ -46,9 +48,10 @@ public:
 			if (std::get<0>(cell) == -1)
 				break;
 			auto robotName = spawnRobot(cell);
+			grid[std::get<0>(cell)][std::get<1>(cell)] = cellStatus::INPROCESS;
 			std::cout << "NEW ROBOT NAME: " << robotName << std::endl;
-			ros::Rate rate(50);
-			rate.sleep();
+			ros::Duration(1, 0).sleep();
+			usleep(1000000);
 		}
     }
 private:
@@ -57,7 +60,7 @@ private:
 		counter++;
 		Robot* robot = new Robot(n, 50, "robot" + std::to_string(counter));
 		robot->spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
-		robot->move(-10 + 10*std::get<0>(cell), -10 + 10*std::get<1>(cell), 20);
+		robot->move(cellIndexToCoordinate(std::get<0>(cell)), cellIndexToCoordinate(std::get<1>(cell)), height);
 		robots.push_back(*robot);
 		return robot->getName();
 	}
@@ -66,7 +69,7 @@ private:
 	{
 	/*
 		HERE:
-		check all flying robots - if in destination - set his and cell status to SET
+		check all flying robots - if in destination - set cell status to SET
 		check for messages from destroyer - if he destroyed ship - set status to DEAD, or remove from vector
 	*/
 	}
@@ -90,22 +93,6 @@ private:
 		return std::make_tuple(-1, -1);
 	}
 
-	bool isGridDone()
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			for (int j = 0; j < 3; j++)
-			{
-				std::cout << "grid_" << i << j << " = " << grid[i][j] << std::endl;
-				if (grid[i][j] != cellStatus::FILLED)
-				{
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
 	void setGrid()
 	{
 		for (int i = 0; i < 3; i++)
@@ -115,6 +102,16 @@ private:
 				grid[i][j] = cellStatus::UNSET;
 			}
 		}
+	}
+
+	int cellIndexToCoordinate(short cellIndex)
+	{
+		return -5 + 5*cellIndex;
+	}
+
+	short coordinateToCellIndex(int coordinate)
+	{
+		return (short)((coordinate + 5)/5);
 	}
 };
 
