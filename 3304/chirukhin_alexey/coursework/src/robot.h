@@ -131,6 +131,8 @@ public:
 private:
     void _move(double x, double y, double z)
     {
+        double precision = 0.001;
+
         float dx = fabs(x - m_x) / 1000;
         dx *= (x - m_x) > 0 ? 1 : -1;
         float dy = fabs(y - m_y) / 1000;
@@ -144,13 +146,16 @@ private:
             transform.setRotation(tf::Quaternion(0, 0, 0, 1));
             tf_broadcaster.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", m_name));
 
-            if (m_x != x && m_y != y && m_z != z)
-            {
+            if (std::abs(m_x - x) > precision)
                 m_x += dx;
+            if (std::abs(m_y - y) > precision)
                 m_y += dy;
+            if (std::abs(m_z - z) > precision)
                 m_z += dz;
-            }
-            else
+
+            if (std::abs(m_y - y) < precision &&
+                std::abs(m_y - y) < precision &&
+                std::abs(m_z - z) < precision)
             {
                 if (m_status != Robot::status::SET)
                     m_status = Robot::status::SET;
