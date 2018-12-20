@@ -10,7 +10,6 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <functional>
 #include <unistd.h>
 
 class Base
@@ -25,7 +24,7 @@ private:
 
 	int counter = 0;
     cellStatus grid[3][3];
-	std::vector<std::reference_wrapper<Robot>> robots;
+	std::vector<Robot*> robots;
 	ros::NodeHandle n;
 	static const int height = 10;
 public:
@@ -40,16 +39,16 @@ public:
 
     void defendPlanet()
     {
-		while (true)
+		while (!isGridDone())
 		{
 			update();
 			auto cell = getFreePosition();
-			std::cout << "get position to spawn: " << std::get<0>(cell) << std::get<1>(cell) << std::endl;
+
 			if (std::get<0>(cell) == -1)
-				break;
+				continue;
 			auto robotName = spawnRobot(cell);
 			grid[std::get<0>(cell)][std::get<1>(cell)] = cellStatus::INPROCESS;
-			std::cout << "NEW ROBOT NAME: " << robotName << std::endl;
+
 			ros::Duration(1, 0).sleep();
 			usleep(1000000);
 		}
@@ -61,17 +60,25 @@ private:
 		Robot* robot = new Robot(n, 50, "robot" + std::to_string(counter));
 		robot->spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
 		robot->move(cellIndexToCoordinate(std::get<0>(cell)), cellIndexToCoordinate(std::get<1>(cell)), height);
-		robots.push_back(*robot);
+		robots.push_back(robot);
 		return robot->getName();
 	}
 
 	void update()
 	{
-	/*
-		HERE:
-		check all flying robots - if in destination - set cell status to SET
-		check for messages from destroyer - if he destroyed ship - set status to DEAD, or remove from vector
-	*/
+		for(auto const& robot: robots)
+		{
+			auto status = robot->getStatus();
+			switch (status) 
+			{
+				case Robot::status::SET:
+					grid[coordinateToCellIndex(robot->getInitialX())][coordinateToCellIndex(robot->getInitialY())] = cellStatus::FILLED;
+					break;
+				case Robot::status::STOPPED:
+					grid[coordinateToCellIndex(robot->getInitialX())][coordinateToCellIndex(robot->getInitialY())] = cellStatus::UNSET;
+					break;
+			}
+		}
 	}
 
 	std::tuple<short, short> getFreePosition()
@@ -80,16 +87,12 @@ private:
 		{
 			for (int j = 0; j < 3; j++)
 			{
-				std::cout << "CHECK grid_" << i << j << " = " << grid[i][j] << std::endl;
-				std::cout << "CHECK values" << cellStatus::UNSET << " " << cellStatus::INPROCESS << " " << cellStatus::FILLED << std::endl;
 				if (grid[i][j] == cellStatus::UNSET)
 				{
-					std::cout << "return some position" << std::endl;
 					return std::make_tuple(i, j);
 				}
 			}
 		}
-		std::cout << "return shit position" << std::endl;
 		return std::make_tuple(-1, -1);
 	}
 
@@ -102,6 +105,21 @@ private:
 				grid[i][j] = cellStatus::UNSET;
 			}
 		}
+	}
+
+	bool isGridDone()
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				if (grid[i][j] != cellStatus::FILLED)
+				{
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	int cellIndexToCoordinate(short cellIndex)
