@@ -9,6 +9,8 @@
 #include <tuple>
 #include <vector>
 #include <string>
+#include <iostream>
+#include <unistd.h>
 
 class Base
 {
@@ -27,6 +29,7 @@ private:
 public:
     Base()
     {
+	setGrid();
     }
 
     ~Base()
@@ -39,42 +42,23 @@ public:
 		{
 			update();
 			auto cell = getFreePosition();
+			std::cout << "get position to spawn: " << std::get<0>(cell) << std::get<1>(cell) << std::endl;
 			if (std::get<0>(cell) == -1)
 				break;
 			auto robotName = spawnRobot(cell);
-// maybe no need to return robotNAme from spawn
+			std::cout << "NEW ROBOT NAME: " << robotName << std::endl;
+			usleep(5000000);
 		}
-/*
-        Robot robot1(n, rate, "robot1");
-	    robot1.spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
-	    robot1.move(10, 10, 20);
-
-	    for (int i = 0; i < 100; i++)
-		rate.sleep();
-
-	    Robot robot2(n, rate, "robot2");
-	    robot2.spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
-	    robot2.move(-10, 10, 20);
-
-	    for (int i = 0; i < 200; i++)
-		rate.sleep();
-
-	    robot1.deleteModel();
-
-	    for (int i = 0; i < 200; i++)
-		rate.sleep();
-
-	    robot2.deleteModel();
-*/
     }
 private:
 	std::string spawnRobot(std::tuple<short, short> cell)
 	{
 		counter++;
 		Robot robot(n, 50, "robot" + std::to_string(counter));
-	    robot.spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
-	    robot.move(-10 + 10*std::get<0>(cell), -10 + 10*std::get<1>(cell), 20);
+		robot.spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
+		robot.move(-10 + 10*std::get<0>(cell), -10 + 10*std::get<1>(cell), 20);
 		robots.push_back(robot);
+		return robot.getName();
 	}
 
 	void update()
@@ -92,12 +76,16 @@ private:
 		{
 			for (int j = 0; j < 3; j++)
 			{
+				std::cout << "CHECK grid_" << i << j << " = " << grid[i][j] << std::endl;
+				std::cout << "CHECK values" << cellStatus::UNSET << " " << cellStatus::INPROCESS << " " << cellStatus::FILLED << std::endl;
 				if (grid[i][j] == cellStatus::UNSET)
 				{
+					std::cout << "return some position" << std::endl;
 					return std::make_tuple(i, j);
 				}
 			}
 		}
+		std::cout << "return shit position" << std::endl;
 		return std::make_tuple(-1, -1);
 	}
 
@@ -107,6 +95,7 @@ private:
 		{
 			for (int j = 0; j < 3; j++)
 			{
+				std::cout << "grid_" << i << j << " = " << grid[i][j] << std::endl;
 				if (grid[i][j] != cellStatus::FILLED)
 				{
 					return false;
@@ -114,6 +103,17 @@ private:
 			}
 		}
 		return true;
+	}
+
+	void setGrid()
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				grid[i][j] = cellStatus::UNSET;
+			}
+		}
 	}
 };
 

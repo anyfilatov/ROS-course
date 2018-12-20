@@ -104,6 +104,11 @@ public:
         srv.call(delete_msg);
     }
 
+	std::string getName()
+	{
+		return m_name;
+	}
+
     Robot::status getStatus()
     {
         return m_status;
