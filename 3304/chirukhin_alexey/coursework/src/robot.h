@@ -8,9 +8,16 @@
 #include <fstream>
 #include <thread>
 
+
 class Robot
 {
 private:
+	enum robotStatus
+	{
+		FLYING,
+		SET,
+		DEAD
+	}
     ros::NodeHandle& m_node_handle;
     ros::Rate& m_rate;
     ros::Publisher m_gazebo_publisher;
@@ -25,6 +32,8 @@ private:
     double m_x;
     double m_y;
     double m_z;
+
+	robotStatus status;
 
     std::thread* m_move_thread;
     bool canceled;
@@ -96,6 +105,7 @@ public:
 
     void move(double x, double y, double z)
     {
+		status = robotStatus::FLYING;
         m_move_thread = new std::thread( [=] { this->_move(x, y, z); } );
     }
 

@@ -18,5 +18,5 @@ include_directories(
 )
 
 set (CMAKE_CXX_STANDARD 11)
-add_executable(base src/base.cpp)
+add_executable(base src/main.cpp)
 target_link_libraries(base ${catkin_LIBRARIES})
