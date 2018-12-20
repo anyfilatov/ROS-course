@@ -21,20 +21,21 @@ public:
         SET
     };
 
-private:
+protected:
     ros::NodeHandle& m_node_handle;
     ros::Rate m_rate;
+
+private:
     ros::Publisher m_gazebo_publisher;
+    gazebo_msgs::ModelState m_state_msg;
 
     tf::TransformBroadcaster tf_broadcaster;
     tf::Transform transform;
 
     std::string m_name;
 
-    gazebo_msgs::ModelState m_state_msg;
-
-	int initialX;
-	int initialY;
+    int initialX;
+    int initialY;
 
     double m_x;
     double m_y;
@@ -55,7 +56,7 @@ public:
         m_status = Robot::status::CREATED;
     }
 
-    ~Robot()
+    virtual ~Robot()
     {
         if (m_status != Robot::status::CREATED)
         {
@@ -75,7 +76,8 @@ public:
         std::ifstream fin(sdf_model_file_path.c_str());
 
         std::string model, buf;
-        while (!fin.eof() && fin) {
+        while (!fin.eof() && fin)
+        {
             getline(fin, buf);
             model += buf + "\n";
         }
@@ -108,10 +110,10 @@ public:
         srv.call(delete_msg);
     }
 
-	std::string getName()
-	{
-		return m_name;
-	}
+    std::string getName()
+    {
+        return m_name;
+    }
 
     Robot::status getStatus()
     {
@@ -130,36 +132,36 @@ public:
         m_status = Robot::status::STOPPED;
     }
 
-    void move(double x, double y, double z)
+    void move(double x, double y, double z, double speed)
     {
-	initialX = x;
-	initialY = y;
+        initialX = x;
+        initialY = y;
         m_move_canceled = false;
-        m_move_thread = new std::thread( [=] { this->_move(x, y, z); } );
+        m_move_thread = new std::thread( [=] { this->_move(x, y, z, speed); } );
         m_status = Robot::status::MOVING;
-    }	
+    }
 
-	int getInitialX()
-	{
-		return initialX;
-	}
+    int getInitialX()
+    {
+        return initialX;
+    }
 
-	int getInitialY()
-	{
-		return initialY;
-	}
+    int getInitialY()
+    {
+        return initialY;
+    }
 
 private:
-    void _move(double x, double y, double z)
+    void _move(double x, double y, double z, double speed)
     {
         double precision = 0.001;
 
-        float dx = fabs(x - m_x) / 1000;
+        float dx = fabs(x - m_x) / speed;
         dx *= (x - m_x) > 0 ? 1 : -1;
-        float dy = fabs(y - m_y) / 1000;
+        float dy = fabs(y - m_y) / speed;
         dy *= (y - m_y) > 0 ? 1 : -1;
-        float dz = fabs(z - m_z) / 1000;
-        dy *= (z - m_z) > 0 ? 1 : -1;
+        float dz = fabs(z - m_z) / speed;
+        dz *= (z - m_z) > 0 ? 1 : -1;
 
         while (!m_move_canceled)
         {
@@ -179,7 +181,7 @@ private:
                 std::abs(m_z - z) < precision)
             {
                 if (m_status != Robot::status::SET)
-    			m_status = Robot::status::SET;
+                    m_status = Robot::status::SET;
             }
 
             m_state_msg.pose.position.x = m_x;
