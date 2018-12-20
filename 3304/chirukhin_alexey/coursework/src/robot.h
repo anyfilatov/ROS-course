@@ -8,18 +8,21 @@
 #include <fstream>
 #include <thread>
 
-
 class Robot
 {
+public:
+    enum status
+    {
+        CREATED,
+        SPAWNED,
+        MOVING,
+        STOPPED,
+        SET
+    };
+
 private:
-	enum robotStatus
-	{
-		FLYING,
-		SET,
-		DEAD
-	}
     ros::NodeHandle& m_node_handle;
-    ros::Rate& m_rate;
+    ros::Rate m_rate;
     ros::Publisher m_gazebo_publisher;
 
     tf::TransformBroadcaster tf_broadcaster;
@@ -33,26 +36,26 @@ private:
     double m_y;
     double m_z;
 
-	robotStatus status;
+    status m_status;
 
     std::thread* m_move_thread;
-    bool canceled;
+    bool m_move_canceled;
 
 public:
-    Robot(ros::NodeHandle& hnd, ros::Rate& rate, std::string name)
-        : m_node_handle(hnd), m_rate(rate), m_name(name)
+    Robot(ros::NodeHandle& hnd, int rate, std::string name) : m_node_handle(hnd),  m_rate(ros::Rate(rate)), m_name(name)
     {
         m_gazebo_publisher = m_node_handle.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 1000);
         m_state_msg.model_name = m_name;
-        canceled = false;
+        m_move_canceled = false;
+        m_move_thread = nullptr;
+        m_status = Robot::status::CREATED;
     }
 
     ~Robot()
     {
-        canceled = true;
-        if (m_move_thread != nullptr)
+        if (m_status != Robot::status::CREATED)
         {
-            m_move_thread->join();
+            deleteModel();
         }
     }
 
@@ -84,15 +87,13 @@ public:
 
         spawn_msg.request.initial_pose = pose;
         srv.call(spawn_msg);
+
+        m_status = Robot::status::SPAWNED;
     }
 
     void deleteModel()
     {
-        canceled = true;
-        if (m_move_thread != nullptr)
-        {
-            m_move_thread->join();
-        }
+        stop();
 
         ros::service::waitForService("gazebo/delete_model");
         ros::ServiceClient srv = m_node_handle.serviceClient<gazebo_msgs::DeleteModel>("gazebo/delete_model");
@@ -103,16 +104,41 @@ public:
         srv.call(delete_msg);
     }
 
+    Robot::status getStatus()
+    {
+        return m_status;
+    }
+
+    void stop()
+    {
+        m_move_canceled = true;
+        if (m_move_thread != nullptr)
+        {
+            m_move_thread->join();
+            delete m_move_thread;
+            m_move_thread = nullptr;
+        }
+        m_status = Robot::status::STOPPED;
+    }
+
     void move(double x, double y, double z)
     {
-		status = robotStatus::FLYING;
+        m_move_canceled = false;
         m_move_thread = new std::thread( [=] { this->_move(x, y, z); } );
+        m_status = Robot::status::MOVING;
     }
 
 private:
     void _move(double x, double y, double z)
     {
-        while (!canceled)
+        float dx = fabs(x - m_x) / 1000;
+        dx *= (x - m_x) > 0 ? 1 : -1;
+        float dy = fabs(y - m_y) / 1000;
+        dy *= (y - m_y) > 0 ? 1 : -1;
+        float dz = fabs(z - m_z) / 1000;
+        dy *= (z - m_z) > 0 ? 1 : -1;
+
+        while (!m_move_canceled)
         {
             transform.setOrigin(tf::Vector3(m_x, m_y, m_z));
             transform.setRotation(tf::Quaternion(0, 0, 0, 1));
@@ -120,16 +146,14 @@ private:
 
             if (m_x != x && m_y != y && m_z != z)
             {
-                float dx = fabs(x - m_x) / 1000;
-                dx *= (x - m_x) > 0 ? 1 : -1;
-                float dy = fabs(y - m_y) / 1000;
-                dy *= (y - m_y) > 0 ? 1 : -1;
-                float dz = fabs(z - m_z) / 1000;
-                dy *= (z - m_z) > 0 ? 1 : -1;
-
                 m_x += dx;
                 m_y += dy;
                 m_z += dz;
+            }
+            else
+            {
+                if (m_status != Robot::status::SET)
+                    m_status = Robot::status::SET;
             }
 
             m_state_msg.pose.position.x = m_x;
