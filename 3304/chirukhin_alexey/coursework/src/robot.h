@@ -7,6 +7,7 @@
 #include "gazebo_msgs/ModelState.h"
 #include <fstream>
 #include <thread>
+#include <iostream>
 
 class Robot
 {
@@ -31,6 +32,9 @@ private:
     std::string m_name;
 
     gazebo_msgs::ModelState m_state_msg;
+
+	int initialX;
+	int initialY;
 
     double m_x;
     double m_y;
@@ -128,10 +132,22 @@ public:
 
     void move(double x, double y, double z)
     {
+	initialX = x;
+	initialY = y;
         m_move_canceled = false;
         m_move_thread = new std::thread( [=] { this->_move(x, y, z); } );
         m_status = Robot::status::MOVING;
-    }
+    }	
+
+	int getInitialX()
+	{
+		return initialX;
+	}
+
+	int getInitialY()
+	{
+		return initialY;
+	}
 
 private:
     void _move(double x, double y, double z)
@@ -158,12 +174,12 @@ private:
             if (std::abs(m_z - z) > precision)
                 m_z += dz;
 
-            if (std::abs(m_y - y) < precision &&
+            if (std::abs(m_x - x) < precision &&
                 std::abs(m_y - y) < precision &&
                 std::abs(m_z - z) < precision)
             {
                 if (m_status != Robot::status::SET)
-                    m_status = Robot::status::SET;
+    			m_status = Robot::status::SET;
             }
 
             m_state_msg.pose.position.x = m_x;
