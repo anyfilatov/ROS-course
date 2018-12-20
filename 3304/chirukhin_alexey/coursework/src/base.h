@@ -10,7 +10,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <unistd.h>
+#include<functional>
 
 class Base
 {
@@ -24,7 +24,7 @@ private:
 
 	int counter = 0;
     cellStatus grid[3][3];
-	std::vector<Robot> robots;
+	std::vector<std::reference_wrapper<Robot>> robots;
 	ros::NodeHandle n;
 public:
     Base()
@@ -47,18 +47,19 @@ public:
 				break;
 			auto robotName = spawnRobot(cell);
 			std::cout << "NEW ROBOT NAME: " << robotName << std::endl;
-			usleep(5000000);
+			ros::Rate rate(50);
+			rate.sleep();
 		}
     }
 private:
 	std::string spawnRobot(std::tuple<short, short> cell)
 	{
 		counter++;
-		Robot robot(n, 50, "robot" + std::to_string(counter));
-		robot.spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
-		robot.move(-10 + 10*std::get<0>(cell), -10 + 10*std::get<1>(cell), 20);
-		robots.push_back(robot);
-		return robot.getName();
+		Robot* robot = new Robot(n, 50, "robot" + std::to_string(counter));
+		robot->spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
+		robot->move(-10 + 10*std::get<0>(cell), -10 + 10*std::get<1>(cell), 20);
+		robots.push_back(*robot);
+		return robot->getName();
 	}
 
 	void update()
