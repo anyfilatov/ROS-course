@@ -18,8 +18,8 @@ private:
 		UNSET,
 		INPROCESS,
 		FILLED
-	}
-	
+	};
+
 	int counter = 0;
     cellStatus grid[3][3];
 	std::vector<Robot> robots;
@@ -71,8 +71,7 @@ private:
 	std::string spawnRobot(std::tuple<short, short> cell)
 	{
 		counter++;
-		Rate rate(50);
-		Robot robot(n, rate, "robot" + std::to_string(counter));
+		Robot robot(n, 50, "robot" + std::to_string(counter));
 	    robot.spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
 	    robot.move(-10 + 10*std::get<0>(cell), -10 + 10*std::get<1>(cell), 20);
 		robots.push_back(robot);
