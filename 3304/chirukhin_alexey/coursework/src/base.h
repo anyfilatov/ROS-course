@@ -176,7 +176,7 @@ private:
 
 	short coordinateToCellIndex(int coordinate)
 	{
-		return (short)((gridDimention % 2 != 0 ? gridDimention - 1 : gridDimention)/2);
+		return (short)((gridDimention % 2 != 0 ? gridDimention - 1 : gridDimention)/2 + coordinate);
 	}
 };
 
