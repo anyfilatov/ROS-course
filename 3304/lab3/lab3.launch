@@ -1,0 +1,9 @@
+<launch>
+	<node pkg="lab3" type="tf_broadcaster" name="lost_robot_tf_broadcaster" args="lost_robot"/>
+	<node pkg="lab3" type="lost_robot" name="lost_robot"/>
+	<node pkg="lab3" type="tf_broadcaster" name="exit_tf_broadcaster" args="exit"/>
+	<node pkg="lab3" type="exit" name="exit"/>
+	<node pkg="lab3" type="tf_broadcaster" name="search_robot_tf_broadcaster" args="search_robot"/>
+	<node pkg="lab3" type="search_robot" name="search_robot"/>
+	<node pkg="rviz" type="rviz" name="rviz"/>	
+</launch>
