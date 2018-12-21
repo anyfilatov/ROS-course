@@ -18,8 +18,8 @@ class Base
 {
 private:
 	static const int height = 4;
-	static const int gridDimention = 3;
-	static const int pauseMicroseconds = 1500000;
+	static const int gridDimention = 4;
+	static const int pauseMicroseconds = 3000000;
 
 	enum cellStatus
 	{
@@ -31,7 +31,7 @@ private:
 	int counter = 0;
     cellStatus grid[gridDimention][gridDimention];
 	std::vector<Robot*> robots;
-	ros::NodeHandle n;	
+	ros::NodeHandle n;
 public:
     Base()
     {
@@ -44,26 +44,28 @@ public:
 
     void defendPlanet()
     {
-		while (!isGridDone())
-		{
-			update();
-			auto cell = getFreePosition();
+		std::thread* t = new std::thread([=] {
+			while (!isGridDone())
+			{
+				update();
+				auto cell = getFreePosition();
 
-			if (std::get<0>(cell) == -1)
-				continue;
-			auto robotName = spawnRobot(cell);
-			grid[std::get<0>(cell)][std::get<1>(cell)] = cellStatus::INPROCESS;
+				if (std::get<0>(cell) == -1)
+					continue;
+				auto robotName = spawnRobot(cell);
+				grid[std::get<0>(cell)][std::get<1>(cell)] = cellStatus::INPROCESS;
 
-			ros::Duration(1, 0).sleep();
-			usleep(pauseMicroseconds);
-		}
+				ros::Duration(1, 0).sleep();
+				usleep(pauseMicroseconds);
+			}
+		});
     }
 private:
 	std::string spawnRobot(std::tuple<short, short> cell)
 	{
 		counter++;
 		Robot* robot = new Robot(n, 50, "robot" + std::to_string(counter));
-		robot->spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
+		robot->spawnModel("/home/pr3sto/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
 		robot->move(cellIndexToCoordinate(std::get<0>(cell)), cellIndexToCoordinate(std::get<1>(cell)), height, 1000);
 		robots.push_back(robot);
 		return robot->getName();
@@ -71,19 +73,42 @@ private:
 
 	void update()
 	{
-		for(auto const& robot: robots)
+		auto i = std::begin(robots);
+		while (i != std::end(robots))
 		{
-			auto status = robot->getStatus();
-			switch (status) 
+			auto status = (*i)->getStatus();
+			bool needErase = false;
+			switch (status)
 			{
 				case Robot::status::SET:
-					grid[coordinateToCellIndex(robot->getInitialX())][coordinateToCellIndex(robot->getInitialY())] = cellStatus::FILLED;
+					grid[coordinateToCellIndex((*i)->getInitialX())][coordinateToCellIndex((*i)->getInitialY())] = cellStatus::FILLED;
 					break;
 				case Robot::status::STOPPED:
-					grid[coordinateToCellIndex(robot->getInitialX())][coordinateToCellIndex(robot->getInitialY())] = cellStatus::UNSET;
+					needErase = true;
+					grid[coordinateToCellIndex((*i)->getInitialX())][coordinateToCellIndex((*i)->getInitialY())] = cellStatus::UNSET;
 					break;
 			}
+
+			if (needErase)
+				i = robots.erase(i);
+			else
+				++i;
 		}
+
+		// for(auto const& robot: robots)
+		// {
+		// 	auto status = robot->getStatus();
+		// 	switch (status)
+		// 	{
+		// 		case Robot::status::SET:
+		// 			grid[coordinateToCellIndex(robot->getInitialX())][coordinateToCellIndex(robot->getInitialY())] = cellStatus::FILLED;
+		// 			break;
+		// 		case Robot::status::STOPPED:
+		// 			ROS_INFO_STREAM("robot stopped: " << robot->getName());
+		// 			grid[coordinateToCellIndex(robot->getInitialX())][coordinateToCellIndex(robot->getInitialY())] = cellStatus::UNSET;
+		// 			break;
+		// 	}
+		// }
 	}
 
 	std::tuple<short, short> getFreePosition()
@@ -123,7 +148,7 @@ private:
 					for(auto const& filledCell: filledCells)
 					{
 						int distance = std::get<0>(filledCell) + std::get<1>(filledCell) - std::get<0>(unsetCell) - std::get<1>(unsetCell);
-						if (std::abs(distance) == 1) 
+						if (std::abs(distance) == 1)
 							return std::make_tuple(std::get<0>(unsetCell), std::get<1>(unsetCell));
 					}
 				}
@@ -132,7 +157,7 @@ private:
 					for(auto const& processCell: processCells)
 					{
 						int distance = std::get<0>(processCell) + std::get<1>(processCell) - std::get<0>(unsetCell) - std::get<1>(unsetCell);
-						if (std::abs(distance) == 1) 
+						if (std::abs(distance) == 1)
 							return std::make_tuple(std::get<0>(unsetCell), std::get<1>(unsetCell));
 					}
 				}
