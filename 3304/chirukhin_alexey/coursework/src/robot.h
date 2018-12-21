@@ -2,6 +2,7 @@
 #define ROBOT_H
 
 #include "ros/ros.h"
+#include "std_msgs/String.h"
 #include "gazebo_msgs/SpawnModel.h"
 #include "gazebo_msgs/DeleteModel.h"
 #include "gazebo_msgs/ModelState.h"
@@ -27,6 +28,7 @@ protected:
 
 private:
     ros::Publisher m_gazebo_publisher;
+    ros::Subscriber m_shot_subscriber;
     gazebo_msgs::ModelState m_state_msg;
 
     tf::TransformBroadcaster tf_broadcaster;
@@ -50,6 +52,7 @@ public:
     Robot(ros::NodeHandle& hnd, int rate, std::string name) : m_node_handle(hnd),  m_rate(ros::Rate(rate)), m_name(name)
     {
         m_gazebo_publisher = m_node_handle.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 1000);
+        m_shot_subscriber = m_node_handle.subscribe("shot/" + m_name, 100, &Robot::_shotCallback, this);
         m_state_msg.model_name = m_name;
         m_move_canceled = false;
         m_move_thread = nullptr;
@@ -191,6 +194,12 @@ private:
 
             m_rate.sleep();
         }
+    }
+
+    void _shotCallback(const std_msgs::String& msg)
+    {
+        if (m_status != Robot::status::SET)
+            stop();
     }
 };
 
