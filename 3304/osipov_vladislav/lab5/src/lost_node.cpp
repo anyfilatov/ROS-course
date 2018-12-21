@@ -55,12 +55,14 @@ int main(int argc, char **argv)
 
     const float max_speed = 0.5;
     const int max_steps = 30;
+    const float da = M_PI / 20;
     float speed_x = 0.0;
     float speed_y = 0.0;
     float x = 0.0;
     float y = 0.0;
     float distance = 0.0;
     float angle = 0.0;
+    float a = 0.0;
     int wait = 60;
     int steps = 0;
     LostState state = LostState::Waiting;
@@ -116,9 +118,25 @@ int main(int argc, char **argv)
                 break;
             }
         }
-        x += speed_x * dt;
-        y += speed_y * dt;
-        pub_marker(pub, x, y, angle);
+        if (fabs(a - angle) < 4 * da)
+        {
+            x += speed_x * dt;
+            y += speed_y * dt;
+            a = angle;
+        }
+        else
+        {
+            if (angle > a)
+            {
+                a = (a + da > M_PI ? 0 : a + da);
+            }
+            else
+            {
+                a = (a - da < -M_PI ? 0 : a - da);
+            }
+        }
+        // ROS_INFO_STREAM("a=" << a << ", angle=" << angle);
+        pub_marker(pub, x, y, a);
         r.sleep();
         ros::spinOnce();
     }
