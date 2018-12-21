@@ -1,18 +1,14 @@
 #ifndef BASE_H
 #define BASE_H
 
-#include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-#include <std_msgs/String.h>
-#include "robot.h"
 #include <tuple>
 #include <vector>
-#include <string>
-#include <iostream>
 #include <unistd.h>
 #include <algorithm>
 #include <random>
+#include "robot.h"
 
 class Base
 {
@@ -31,50 +27,75 @@ private:
 	int counter = 0;
     cellStatus grid[gridDimention][gridDimention];
 	std::vector<Robot*> robots;
+	std::vector<Robot*> watched_robots;
 	ros::NodeHandle n;
+
+	std::thread* defender_thread;
+	bool defender_canceled;
+
 public:
     Base()
     {
-	setGrid();
+		defender_canceled = false;
+		defender_thread = nullptr;
+		setGrid();
     }
 
     ~Base()
     {
+		defender_canceled = true;
+		if (defender_thread != nullptr)
+        {
+            defender_thread->join();
+            delete defender_thread;
+            defender_thread = nullptr;
+        }
+
+		for(auto const& robot: robots)
+		{
+			delete robot;
+		}
     }
 
     void defendPlanet()
     {
-		std::thread* t = new std::thread([=] {
+		defender_thread = new std::thread([=]
+		{
 			while (!isGridDone())
 			{
+				if (defender_canceled)
+					break;
+
 				update();
+
 				auto cell = getFreePosition();
 
-				if (std::get<0>(cell) == -1)
-					continue;
-				auto robotName = spawnRobot(cell);
-				grid[std::get<0>(cell)][std::get<1>(cell)] = cellStatus::INPROCESS;
+				if (std::get<0>(cell) != -1)
+				{
+					spawnRobot(cell);
+					grid[std::get<0>(cell)][std::get<1>(cell)] = cellStatus::INPROCESS;
+				}
 
-				ros::Duration(1, 0).sleep();
 				usleep(pauseMicroseconds);
 			}
 		});
     }
+
 private:
-	std::string spawnRobot(std::tuple<short, short> cell)
+	void spawnRobot(std::tuple<short, short> cell)
 	{
 		counter++;
 		Robot* robot = new Robot(n, 50, "robot" + std::to_string(counter));
 		robot->spawnModel("/home/pr3sto/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
 		robot->move(cellIndexToCoordinate(std::get<0>(cell)), cellIndexToCoordinate(std::get<1>(cell)), height, 1000);
 		robots.push_back(robot);
-		return robot->getName();
+		watched_robots.push_back(robot);
 	}
 
 	void update()
 	{
-		auto i = std::begin(robots);
-		while (i != std::end(robots))
+		auto i = std::begin(watched_robots);
+		while (i != std::end(watched_robots))
 		{
 			auto status = (*i)->getStatus();
 			bool needErase = false;
@@ -90,25 +111,10 @@ private:
 			}
 
 			if (needErase)
-				i = robots.erase(i);
+				i = watched_robots.erase(i);
 			else
 				++i;
 		}
-
-		// for(auto const& robot: robots)
-		// {
-		// 	auto status = robot->getStatus();
-		// 	switch (status)
-		// 	{
-		// 		case Robot::status::SET:
-		// 			grid[coordinateToCellIndex(robot->getInitialX())][coordinateToCellIndex(robot->getInitialY())] = cellStatus::FILLED;
-		// 			break;
-		// 		case Robot::status::STOPPED:
-		// 			ROS_INFO_STREAM("robot stopped: " << robot->getName());
-		// 			grid[coordinateToCellIndex(robot->getInitialX())][coordinateToCellIndex(robot->getInitialY())] = cellStatus::UNSET;
-		// 			break;
-		// 	}
-		// }
 	}
 
 	std::tuple<short, short> getFreePosition()

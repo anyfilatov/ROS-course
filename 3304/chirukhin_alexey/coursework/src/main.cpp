@@ -4,6 +4,7 @@
 #include "enemy.h"
 
 Enemy* enemy = nullptr;
+Base* base = nullptr;
 
 void signalHandler(int signum)
 {
@@ -12,6 +13,11 @@ void signalHandler(int signum)
     if (enemy != nullptr)
     {
         delete enemy;
+    }
+
+    if (base != nullptr)
+    {
+        delete base;
     }
 
     ros::shutdown();
@@ -29,8 +35,8 @@ int main(int argc, char **argv)
     enemy->move(0, 0, 0, 10000);
     enemy->startShooting();
 
-    Base base;
-    base.defendPlanet();
+    base = new Base();
+    base->defendPlanet();
 
     ros::spin();
     return 0;
