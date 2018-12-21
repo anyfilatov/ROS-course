@@ -7,6 +7,7 @@ using namespace ros;
 double Step = 0.1;
 double ExitX = -10.0;
 double ExitY = 10.0;
+double angleStep = 0.5;
 bool AreObjectsCloseEnough(double x1, double y1, double x2, double y2)
 {
 	double distance = sqrt(pow(x1-x2, 2)+pow(y1-y2, 2));
@@ -28,6 +29,7 @@ int main(int argc, char *argv[])
     	msg.pose.orientation.w = cos(0);
 	tf::TransformListener listener;
 	Rate rate(100);
+	double oldAngle, angle;
 	while(true)
     	{
 		tf::StampedTransform transform;
@@ -42,7 +44,8 @@ int main(int argc, char *argv[])
       			sleep(1);
       			continue;
                 }
-                double angle = atan2(transform.getOrigin().y(), transform.getOrigin().x());
+		oldAngle=angle;
+                angle = atan2(transform.getOrigin().y(), transform.getOrigin().x());
         	msg.pose.position.x+=Step*cos(angle);
         	msg.pose.position.y+=Step*sin(angle);
     		msg.pose.orientation.z=sin(angle/2);
@@ -55,13 +58,40 @@ int main(int argc, char *argv[])
         	rate.sleep();
 	}
 	while(true)
-	{
-                double angle = atan2(ExitY-msg.pose.position.y, ExitX-msg.pose.position.x);
+	{	
+		oldAngle=angle;
+                angle = atan2(ExitY-msg.pose.position.y, ExitX-msg.pose.position.x);
         	msg.pose.position.x+=Step*cos(angle);
         	msg.pose.position.y+=Step*sin(angle);
+		if(oldAngle<angle)
+		{
+			for(double middleAngle=oldAngle; middleAngle<angle; middleAngle+=angleStep)
+			{
+				msg.pose.orientation.z=sin(middleAngle/2);
+    				msg.pose.orientation.w=cos(middleAngle/2);
+        			publisher.publish(msg);
+				rate.sleep();
+			}
+		}
+		else
+		{
+			for(double middleAngle=oldAngle; middleAngle>angle; middleAngle-=angleStep)
+			{
+				msg.pose.orientation.z=sin(middleAngle/2);
+    				msg.pose.orientation.w=cos(middleAngle/2);
+        			publisher.publish(msg);
+				rate.sleep();
+			}
+		}
     		msg.pose.orientation.z=sin(angle/2);
     		msg.pose.orientation.w=cos(angle/2);
         	publisher.publish(msg);
+		if(AreObjectsCloseEnough(ExitX, ExitY, msg.pose.position.x, msg.pose.position.y))
+                {
+			break;
+                }
         	rate.sleep();
     	}
+	while(true)
+		publisher.publish(msg);
 }

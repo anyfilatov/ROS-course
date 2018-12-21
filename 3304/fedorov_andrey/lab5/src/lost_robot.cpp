@@ -7,7 +7,10 @@ using namespace ros;
 double MinStep = -0.1;
 double MaxStep = 0.1;
 double OneDirectionStepsCount = 25;
-double StepForGoToExit = 0.1;
+double StepForGoToExit = 0.2;
+double ExitX = -10.0;
+double ExitY = 10.0;
+double angleStep = 0.1;
 double GenerateStep()
 {
 	return (MaxStep-MinStep) * ((double)rand()/RAND_MAX) + MinStep;
@@ -37,6 +40,7 @@ int main(int argc, char **argv)
 	int stepNumber = 0;
 	double stepX = GenerateStep();
 	double stepY = GenerateStep();
+	double oldAngle, angle=0;
 	while(true)
 	{
     		tf::StampedTransform transform;
@@ -59,7 +63,28 @@ int main(int argc, char **argv)
 		}
     		msg.pose.position.x += stepX;
     		msg.pose.position.y += stepY;
-		double angle = atan2(stepY, stepX);
+		oldAngle=angle;
+		angle = atan2(stepY, stepX);
+		if(oldAngle<angle)
+		{
+			for(double middleAngle=oldAngle; middleAngle<angle; middleAngle+=angleStep)
+			{
+				msg.pose.orientation.z=sin(middleAngle/2);
+    				msg.pose.orientation.w=cos(middleAngle/2);
+        			publisher.publish(msg);
+				rate.sleep();
+			}
+		}
+		else
+		{
+			for(double middleAngle=oldAngle; middleAngle>angle; middleAngle-=angleStep)
+			{
+				msg.pose.orientation.z=sin(middleAngle/2);
+    				msg.pose.orientation.w=cos(middleAngle/2);
+        			publisher.publish(msg);
+				rate.sleep();
+			}
+		}
     		msg.pose.orientation.z = sin(angle/2);
     		msg.pose.orientation.w = cos(angle/2);
 		publisher.publish(msg);
@@ -85,12 +110,37 @@ int main(int argc, char **argv)
       			sleep(1);
             		continue;
        		}
-         	double angle = atan2(transform.getOrigin().y(), transform.getOrigin().x());
+		oldAngle = angle;
+         	angle = atan2(transform.getOrigin().y(), transform.getOrigin().x());
+		if(oldAngle<angle)
+		{
+			for(double middleAngle=oldAngle; middleAngle<angle; middleAngle+=angleStep)
+			{
+				msg.pose.orientation.z=sin(middleAngle/2);
+    				msg.pose.orientation.w=cos(middleAngle/2);
+        			publisher.publish(msg);
+				rate.sleep();
+			}
+		}
+		else
+		{
+			for(double middleAngle=oldAngle; middleAngle>angle; middleAngle-=angleStep)
+			{
+				msg.pose.orientation.z=sin(middleAngle/2);
+    				msg.pose.orientation.w=cos(middleAngle/2);
+        			publisher.publish(msg);
+				rate.sleep();
+			}
+		}
     		msg.pose.position.x+=StepForGoToExit*cos(angle);
     		msg.pose.position.y+=StepForGoToExit*sin(angle);
     		msg.pose.orientation.z = sin(angle/2);
     		msg.pose.orientation.w = cos(angle/2);
 		publisher.publish(msg);
+		if(sqrt(pow(ExitX-msg.pose.position.x, 2)+pow(ExitY-msg.pose.position.y, 2))<2)
+			break;
         	rate.sleep();
     	}
+	while(true)
+		publisher.publish(msg);
 }
