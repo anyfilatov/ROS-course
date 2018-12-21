@@ -12,7 +12,7 @@ using namespace std;
 bool isFound = false;
 
 
-int main(int argc, char ** argv)//20
+int main(int argc, char ** argv)
 {
 	srand (time(NULL));
 	ros::init(argc, argv, "findRobot");
@@ -53,7 +53,7 @@ int main(int argc, char ** argv)//20
 
         ros::Publisher pubgaz = 
             n.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 10);
-        //sleep(1.0);
+        
 
         gazebo_msgs::ModelState msg;
         msg.model_name = "findRobot";
