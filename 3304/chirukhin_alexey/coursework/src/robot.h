@@ -7,6 +7,7 @@
 #include "gazebo_msgs/DeleteModel.h"
 #include "gazebo_msgs/ModelState.h"
 #include <fstream>
+#include <string>
 #include <thread>
 #include <iostream>
 

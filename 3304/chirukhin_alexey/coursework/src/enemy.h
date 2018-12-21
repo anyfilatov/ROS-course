@@ -2,9 +2,9 @@
 #define ENEMY_H
 
 #include "robot.h"
+#include <cstdlib>
 #include <time.h>
 #include <vector>
-#include <string>
 
 class Enemy : public Robot
 {
