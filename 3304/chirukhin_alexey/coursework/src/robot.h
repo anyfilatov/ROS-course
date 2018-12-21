@@ -24,10 +24,11 @@ public:
 
 protected:
     ros::NodeHandle& m_node_handle;
-    ros::Rate m_rate;
 
 private:
+    ros::Rate m_rate;
     ros::Publisher m_gazebo_publisher;
+    ros::Publisher m_appear_publisher;
     ros::Subscriber m_shot_subscriber;
     gazebo_msgs::ModelState m_state_msg;
 
@@ -36,8 +37,8 @@ private:
 
     std::string m_name;
 
-    int initialX;
-    int initialY;
+    int m_initial_x;
+    int m_initial_y;
 
     double m_x;
     double m_y;
@@ -52,7 +53,8 @@ public:
     Robot(ros::NodeHandle& hnd, int rate, std::string name) : m_node_handle(hnd),  m_rate(ros::Rate(rate)), m_name(name)
     {
         m_gazebo_publisher = m_node_handle.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 1000);
-        m_shot_subscriber = m_node_handle.subscribe("shot/" + m_name, 100, &Robot::_shotCallback, this);
+        m_appear_publisher = m_node_handle.advertise<std_msgs::String>("appear", 10);
+        m_shot_subscriber = m_node_handle.subscribe("shot/" + m_name, 10, &Robot::_shotCallback, this);
         m_state_msg.model_name = m_name;
         m_move_canceled = false;
         m_move_thread = nullptr;
@@ -97,6 +99,10 @@ public:
         spawn_msg.request.initial_pose = pose;
         srv.call(spawn_msg);
 
+        std_msgs::String msg;
+        msg.data = m_name;
+        m_appear_publisher.publish(msg);
+
         m_status = Robot::status::SPAWNED;
     }
 
@@ -113,16 +119,6 @@ public:
         srv.call(delete_msg);
     }
 
-    std::string getName()
-    {
-        return m_name;
-    }
-
-    Robot::status getStatus()
-    {
-        return m_status;
-    }
-
     void stop()
     {
         m_move_canceled = true;
@@ -137,21 +133,31 @@ public:
 
     void move(double x, double y, double z, double speed)
     {
-        initialX = x;
-        initialY = y;
+        m_initial_x = x;
+        m_initial_y = y;
         m_move_canceled = false;
         m_move_thread = new std::thread( [=] { this->_move(x, y, z, speed); } );
         m_status = Robot::status::MOVING;
     }
 
+    std::string getName()
+    {
+        return m_name;
+    }
+
+    Robot::status getStatus()rm
+    {
+        return m_status;
+    }
+
     int getInitialX()
     {
-        return initialX;
+        return m_initial_x;
     }
 
     int getInitialY()
     {
-        return initialY;
+        return m_initial_y;
     }
 
 private:
