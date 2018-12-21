@@ -11,13 +11,15 @@
 #include <string>
 #include <iostream>
 #include <unistd.h>
+#include <algorithm>
+#include <random>
 
 class Base
 {
 private:
 	static const int height = 4;
-	static const int gridDimention = 5;
-	static const int pauseMicroseconds = 200000;
+	static const int gridDimention = 3;
+	static const int pauseMicroseconds = 1500000;
 
 	enum cellStatus
 	{
@@ -62,7 +64,7 @@ private:
 		counter++;
 		Robot* robot = new Robot(n, 50, "robot" + std::to_string(counter));
 		robot->spawnModel("/home/ed/.gazebo/models/quadrotor/model-1_4.sdf", 0, 0, 0);
-		robot->move(cellIndexToCoordinate(std::get<0>(cell)), cellIndexToCoordinate(std::get<1>(cell)), height);
+		robot->move(cellIndexToCoordinate(std::get<0>(cell)), cellIndexToCoordinate(std::get<1>(cell)), height, 1000);
 		robots.push_back(robot);
 		return robot->getName();
 	}
@@ -86,15 +88,57 @@ private:
 
 	std::tuple<short, short> getFreePosition()
 	{
+		std::vector<std::tuple<short, short> > unsetCells;
+		std::vector<std::tuple<short, short> > processCells;
+		std::vector<std::tuple<short, short> > filledCells;
+
 		for (int i = 0; i < gridDimention; i++)
 		{
 			for (int j = 0; j < gridDimention; j++)
 			{
-				if (grid[i][j] == cellStatus::UNSET)
+				switch (grid[i][j])
 				{
-					return std::make_tuple(i, j);
+					case cellStatus::UNSET:
+						unsetCells.push_back(std::make_tuple(i, j));
+						break;
+					case cellStatus::INPROCESS:
+						processCells.push_back(std::make_tuple(i, j));
+						break;
+					case cellStatus::FILLED:
+						filledCells.push_back(std::make_tuple(i, j));
+						break;
 				}
 			}
+		}
+
+		if (!unsetCells.empty())
+		{
+			auto rng = std::default_random_engine {};
+			std::shuffle(std::begin(filledCells), std::end(filledCells), rng);
+			std::shuffle(std::begin(processCells), std::end(processCells), rng);
+			for(auto const& unsetCell: unsetCells)
+			{
+				if (!filledCells.empty())
+				{
+					for(auto const& filledCell: filledCells)
+					{
+						int distance = std::get<0>(filledCell) + std::get<1>(filledCell) - std::get<0>(unsetCell) - std::get<1>(unsetCell);
+						if (std::abs(distance) == 1) 
+							return std::make_tuple(std::get<0>(unsetCell), std::get<1>(unsetCell));
+					}
+				}
+				if (!processCells.empty())
+				{
+					for(auto const& processCell: processCells)
+					{
+						int distance = std::get<0>(processCell) + std::get<1>(processCell) - std::get<0>(unsetCell) - std::get<1>(unsetCell);
+						if (std::abs(distance) == 1) 
+							return std::make_tuple(std::get<0>(unsetCell), std::get<1>(unsetCell));
+					}
+				}
+			}
+			std::shuffle(std::begin(unsetCells), std::end(unsetCells), rng);
+			return std::make_tuple(std::get<0>(unsetCells[0]), std::get<1>(unsetCells[0]));
 		}
 		return std::make_tuple(-1, -1);
 	}
@@ -127,14 +171,12 @@ private:
 
 	int cellIndexToCoordinate(short cellIndex)
 	{
-		// cellIndex - 1; if gridDimention == 3
-		return cellIndex - 2;
+		return cellIndex - (gridDimention % 2 != 0 ? gridDimention - 1 : gridDimention)/2;
 	}
 
 	short coordinateToCellIndex(int coordinate)
 	{
-		// (short)(coordinate + 1); if gridDimention == 3
-		return (short)(coordinate + 2);
+		return (short)((gridDimention % 2 != 0 ? gridDimention - 1 : gridDimention)/2);
 	}
 };
 
