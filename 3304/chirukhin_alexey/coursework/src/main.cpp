@@ -9,6 +9,7 @@ int main(int argc, char **argv)
     Enemy enemy(n, 50, "enemy");
     enemy.spawnModel("/home/pr3sto/.gazebo/models/dumpster/model-1_4.sdf", 0, 0, 100);
     enemy.move(0, 0, 0, 10000);
+    enemy.startShooting();
 
     Base base;
     base.defendPlanet();

@@ -54,7 +54,7 @@ public:
     {
         m_gazebo_publisher = m_node_handle.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 1000);
         m_appear_publisher = m_node_handle.advertise<std_msgs::String>("appear", 10);
-        m_shot_subscriber = m_node_handle.subscribe("shot/" + m_name, 10, &Robot::_shotCallback, this);
+        m_shot_subscriber = m_node_handle.subscribe("shoot/" + m_name, 10, &Robot::_shotCallback, this);
         m_state_msg.model_name = m_name;
         m_move_canceled = false;
         m_move_thread = nullptr;
@@ -145,7 +145,7 @@ public:
         return m_name;
     }
 
-    Robot::status getStatus()rm
+    Robot::status getStatus()
     {
         return m_status;
     }

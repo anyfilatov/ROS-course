@@ -2,25 +2,41 @@
 #define ENEMY_H
 
 #include "robot.h"
+#include <time.h>
+#include <vector>
+#include <string>
 
 class Enemy : public Robot
 {
 private:
-    ros::Publisher m_shot_publisher;
+    static const int shoot_pause_microseconds = 6000000;
+
+    ros::Publisher m_shoot_publisher;
+    ros::Subscriber m_appear_subscriber;
 
     std::thread* m_shoot_thread;
     bool m_shoot_canceled;
 
+    std::vector<std::string> robots;
+
 public:
     Enemy(ros::NodeHandle& hnd, int rate, std::string name) : Robot(hnd, rate, name)
     {
+        srand(time(NULL));
+        m_appear_subscriber = m_node_handle.subscribe("appear", 10, &Enemy::_appearCallback, this);
         m_shoot_canceled = false;
-        m_shoot_thread = new std::thread([=] { this->_shoot(); });
+        m_shoot_thread = nullptr;
     }
 
     ~Enemy()
     {
         stopShooting();
+    }
+
+    void startShooting()
+    {
+        m_shoot_canceled = false;
+        m_shoot_thread = new std::thread([=] { this->_shoot(); });
     }
 
     void stopShooting()
@@ -39,17 +55,29 @@ private:
     {
         while (!m_shoot_canceled)
         {
-            int counter = rand() % 10;
-            std::string name = "shot/robot" + std::to_string(counter);
-            ROS_INFO_STREAM("shoot: " << name);
+            if (!robots.empty())
+            {
+                int pos = rand() % robots.size();
 
-            m_shot_publisher = m_node_handle.advertise<std_msgs::String>(name, 10);
-            std_msgs::String msg;
-            msg.data = std::string("DIE!");
-            m_shot_publisher.publish(msg);
+                ROS_INFO_STREAM("Enemy shoot: " << robots.at(pos));
 
-            for (int i = 0; i < 300; i++)
-                m_rate.sleep();
+                m_shoot_publisher = m_node_handle.advertise<std_msgs::String>("shoot/" + robots.at(pos), 10);
+                std_msgs::String msg;
+                msg.data = std::string("DIE!");
+                m_shoot_publisher.publish(msg);
+
+                robots.erase(robots.begin() + pos);
+            }
+
+            usleep(shoot_pause_microseconds);
+        }
+    }
+
+    void _appearCallback(const std_msgs::String& msg)
+    {
+        if (msg.data != getName())
+        {
+            robots.push_back(msg.data);
         }
     }
 };
