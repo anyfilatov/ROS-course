@@ -21,6 +21,8 @@ int main(int argc, char **argv) {
     exit_point.y = 0;
     exit_point.z = 0;
     
+	lost_robot.name = "lost";
+	
 	marker_pub.publish(create_marker(finder_robot));
 	
 	bool flag = false;
