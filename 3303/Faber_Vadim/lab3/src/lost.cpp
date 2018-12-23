@@ -32,6 +32,8 @@ int main(int argc, char **argv) {
     lost_robot.y = 10;
     lost_robot.z = 0;
     
+	finder_robot.name = "finder";
+	
 	marker_pub.publish(create_marker(lost_robot));
 	
 	bool flag = false;
