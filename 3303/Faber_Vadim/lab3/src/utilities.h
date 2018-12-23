@@ -59,23 +59,6 @@ bool get_robot_coordinates(Robot &robot) {
     }
 }
 
-bool get_robot_coordinates(Robot &robot) {
-	static tf::TransformListener listener;
-    tf::StampedTransform transform;
-    try {
-        listener.lookupTransform("world", robot.name, ros::Time(1), transform);
-        robot.x = transform.getOrigin().x();
-        robot.y = transform.getOrigin().y();
-        robot.z = transform.getOrigin().z();
-        ROS_INFO("Robot %s coordinates: ( %.2f ; %.2f ; %.2f )", robot.name, robot.x, robot.y, robot.z);
-        return true;
-    }
-    catch (tf::TransformException &ex) {
-        ROS_ERROR("%s",ex.what());
-        return false;
-    }
-}
-
 
 float get_next_coordinate(float current, float destination, float speed) {
     if (current + speed < destination) {
