@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="lab3" type="lobot" name="lobot"/>
+    <node pkg="lab3" type="rebot" name="rebot"/>
+    <node pkg="rviz" type="rviz" name="rviz"/>
+</launch>
