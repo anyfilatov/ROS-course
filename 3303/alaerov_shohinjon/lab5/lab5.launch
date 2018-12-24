@@ -1,0 +1,20 @@
+<launch>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch"/>
+  <node pkg="lab5" type="tf_broadcaster_lab5" name="lost_robot_tf_broadcaster" args="lost_robot"/>
+  <node name="helper_robot" pkg="lab5" type="helper_robot_lab5"/>
+  <node pkg="lab5" type="tf_broadcaster_lab5" name="helper_robot_tf_broadcaster" args="helper_robot"/>
+  <node name="lost_robot" pkg="lab5" type="lost_robot_lab5"/>
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="robot_model" default="$(find lab5)/robot_model/urdf/robot.urdf.xacro"/>
+
+  <param name="robot_description" command="$(find xacro)/xacro.py $(arg robot_model)"/>
+
+  <node name="spawn_helper_robot" pkg="gazebo_ros" type="spawn_model"
+        args="-x -10 -y 10 -z 1 -unpause -urdf -model helper_robot -param robot_description" respawn="false" output="screen"/>
+  <node name="spawn_lost_robot" pkg="gazebo_ros" type="spawn_model"
+        args="-x 4 -y -2 -z 1 -unpause -urdf -model lost_robot -param robot_description" respawn="false" output="screen"/>
+</launch>
