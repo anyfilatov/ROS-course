@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+  <name>lost_robot_5</name>
+  <version>0.0.0</version>
+  <description>The lost_robot_5 package</description>
+
+  <maintainer email="andrey@todo.todo">andrey</maintainer>
+  <license>TODO</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>roscpp</build_depend>
+    <build_depend>gazebo_ros</build_depend>
+
+    <run_depend>roscpp</run_depend>
+    <run_depend>gazebo_ros</run_depend>
+
+</package>
