@@ -1,75 +1,117 @@
-#include "lab5/saver_robot.h"
+#include <csignal>
+#include <ros/ros.h>
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
+#include <std_msgs/String.h>
+#include "robot.h"
+#include <iostream>
 
+Robot* saver_robot;
 
-SaveBot::SaveBot()
+void signalHandler(int signum)
 {
-	SaveBot("saver", "lost", 0, 0, 0);
+    ROS_INFO("TERMINATED");
+
+    if (saver_robot != NULL)
+    {
+        saver_robot->deleteModel();
+        delete saver_robot;
+    }
+
+    exit(signum);
 }
 
-SaveBot::SaveBot(string my_name, string lost_name, float x, float y, float w)
-	:Bot(my_name, lost_name, x, y, w)
+int main(int argc, char ** argv)
 {
-	exit_x = x;
-	exit_y = y;
-	speed = 0.1;
-	angle_speed = 0.1;
-}
+    signal(SIGINT, signalHandler);
 
-void SaveBot::chase()
-{
-	updatePartnerPos();
+    ros::init(argc, argv, "saver_robot", ros::init_options::NoSigintHandler);
 
-	float p_x = partner_pos.getOrigin().x();
-	float p_y = partner_pos.getOrigin().y();
+    ros::NodeHandle n;
+    ros::Publisher publisher_found_topic = n.advertise<std_msgs::String>("found_topic", 10);
+    ros::Rate rate(60);
 
-	int signX = 0 < p_x ? 1 : -1;
-	int signY = 0 < p_y ? 1 : -1;
+    tf::TransformListener tf_listener;
+    tf::TransformBroadcaster tf_broadcaster;
+    tf::StampedTransform lost_transform;
+    tf::Transform transform;
 
-	if(signX == 1 && signY == 1) w = -0.3;
-	if(signX == -1 && signY == 1) w = -2.36;
-	if(signX == -1 && signY == -1) w = 2.36;
-	if(signX == 1 && signY == -1) w = 0.3;
+    bool found = false;
 
-	x = x + signX*speed;
-	y = y + signY*speed;
+    float x = 0.0;
+    float y = 0.0;
 
-   	updatePose();
-}
+    saver_robot = new Robot(n, 120, "saver_robot", "/home/ed/.gazebo/models/pioneer3at/model-1_4.sdf", x, y);
 
-void SaveBot::goBack()
-{
-	if( (pow(exit_x - x,2) + pow(exit_y - x, 2)) > pow(delta,2) )
-	{
-		int signX = x < exit_x ? 1 : -1;
-		int signY = y < exit_y ? 1 : -1;
+    while(ros::ok())
+    {
+        transform.setOrigin(tf::Vector3(x, y, 0.0));
+        transform.setRotation(tf::Quaternion(0, 0, 0, 1));
+        tf_broadcaster.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "saver_robot"));
 
-		if(signX == 1 && signY == 1) w = -0.3;
-		if(signX == -1 && signY == 1) w = -2.36;
-		if(signX == -1 && signY == -1) w = 2.36;
-		if(signX == 1 && signY == -1) w = 0.3;
+        if (!found)
+        {
+            try
+            {
+                tf_listener.waitForTransform("saver_robot", "lost_robot", ros::Time(0), ros::Duration(0.5));
+                tf_listener.lookupTransform("saver_robot", "lost_robot", ros::Time(0), lost_transform);
+            }
+            catch (tf::TransformException &ex)
+            {
+                rate.sleep();
+                continue;
+            }
 
-		x = x + signX*speed;
-		y = y + signY*speed;
-	}
-   	updatePose();
-}
+            float lost_x = lost_transform.getOrigin().x();
+            float lost_y = lost_transform.getOrigin().y();
 
-void SaveBot::start()
-{
-	Rate rate(10);
-	bool found = false;
+            if (fabs(lost_x) < 3 && fabs(lost_y) < 3)
+            {
+                ROS_INFO("Found!");
+                found = true;
+                std_msgs::String msg;
+                msg.data = std::string("Follow me!");
+                publisher_found_topic.publish(msg);
+            }
+            else
+            {
+		float absX = std::abs(lost_x);
+		float absY = std::abs(lost_y);
+		float len = std::sqrt(lost_x*lost_x + lost_y*lost_y);
+		float dx = lost_x / len;
+		float dy = lost_y / len;
 
-	while(node.ok())
-	{
-		if(!isMet() && !found)
-		{
-			goToFind();
+		x += dx;
+		y += dy;
+            }
+        }
+        else
+        {
+            if (x != 0 || y != 0)
+            {
+		float len = std::sqrt(x*x + y*y);
+		if (len > 1)
+		{						
+			float dx = x / len;
+			float dy = y / len;
+
+			x -= dx;
+			y -= dy;
 		}
-		else
+		else 
 		{
-			found = true;
-			goBack();
+			x = 0;
+			y = 0;
 		}
-		rate.sleep();
-	}
+            }
+        }
+
+        saver_robot->move(x, y);
+
+        rate.sleep();
+        ros::spinOnce();
+    }
+
+    return 0;
 }
+
