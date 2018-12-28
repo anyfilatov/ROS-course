@@ -1,0 +1,5 @@
+<launch>
+<node pkg="lab3" type="helper_robot" name="helper"/>
+<node pkg="lab3" type="lost_robot" name="lost"/>
+<node pkg="rviz" type="rviz" name="rviz"/>
+</launch>
