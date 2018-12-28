@@ -6,8 +6,12 @@
 #include "ros/ros.h"
 #include "gazebo_msgs/SpawnModel.h"
 #include "gazebo_msgs/ModelState.h"
+#include "std_msgs/String.h"
 
-void pub_marker(const ros::Publisher &pub, std::string frame_id, float x, float y, float angle);
+void pub_marker(const ros::Publisher &pub, float x, float y, float angle);
+void found_topic_callback(const std_msgs::String& msg);
+
+bool found_exit = false;
 
 enum class LostState
 {
@@ -41,25 +45,32 @@ int main(int argc, char **argv)
     ros::Publisher pub =
         nh.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 10, true);
 
+    ros::Subscriber sub = nh.subscribe("/found_topic", 10, &found_topic_callback);
+
     std::srand((unsigned)std::time(0));
 
     std::string base_frame_id = "world";
     std::string frame_id = "/the_lost";
     std::string helper_frame_id = "/the_helper";
 
-    const float max_speed = 1.0;
+    const float max_speed = 0.5;
+    const int max_steps = 30;
+    const float da = M_PI / 20;
     float speed_x = 0.0;
     float speed_y = 0.0;
     float x = 0.0;
     float y = 0.0;
     float distance = 0.0;
     float angle = 0.0;
+    float a = 0.0;
+    int wait = 60;
+    int steps = 0;
     LostState state = LostState::Waiting;
 
     ros::Rate r(30);
     float dt = (float)r.expectedCycleTime().toSec();
 
-    while (ros::ok())
+    while (ros::ok() && !found_exit)
     {
         float sx, sy;
         broadcast_pose(x, y, base_frame_id, frame_id);
@@ -69,17 +80,23 @@ int main(int argc, char **argv)
         }
         catch (const tf::TransformException &e)
         {
+            r.sleep();
             continue;
         }
-        distance = range(x, y, sx, sy);
-         angle = calcAngle(sx - x, sy - y);
+        distance = range(x, y, sx + x, sy + y);
+        angle = calcAngle(sx, sy);
         switch (state)
         {
             case LostState::Waiting:
             {
-                speed_x = 2.0 * max_speed * (((float)std::rand() / RAND_MAX) - 0.5);
-                speed_y = 2.0 * max_speed * (((float)std::rand() / RAND_MAX) - 0.5);
-                if (distance < 1.5)
+                steps = (steps + 1) % max_steps;
+                if (steps == 0)
+                {
+                    speed_x = 0.3 * max_speed * (float)(std::rand() % 2);
+                    speed_y = 0.3 * max_speed * (float)(std::rand() % 2);
+                }
+                angle = calcAngle(speed_x, speed_y);
+                if (distance < 1.8)
                 {
                     state = LostState::Chase;
                 }
@@ -87,15 +104,41 @@ int main(int argc, char **argv)
             }
             case LostState::Chase:
             {
-                speed_x = max_speed * cos(angle);
-                speed_y = max_speed * sin(angle);
+                if (wait > 0)
+                {
+                    wait--;
+                    speed_x = 0;
+                    speed_y = 0;
+                }
+                else
+                {
+                    speed_x = max_speed * cos(angle);
+                    speed_y = max_speed * sin(angle);
+                }
                 break;
             }
         }
-        x += speed_x * dt;
-        y += speed_y * dt;
-        pub_marker(pub, x, y, angle);
+        if (fabs(a - angle) < 4 * da)
+        {
+            x += speed_x * dt;
+            y += speed_y * dt;
+            a = angle;
+        }
+        else
+        {
+            if (angle > a)
+            {
+                a = (a + da > M_PI ? 0 : a + da);
+            }
+            else
+            {
+                a = (a - da < -M_PI ? 0 : a - da);
+            }
+        }
+        // ROS_INFO_STREAM("a=" << a << ", angle=" << angle);
+        pub_marker(pub, x, y, a);
         r.sleep();
+        ros::spinOnce();
     }
     return 0;
 }
@@ -110,4 +153,10 @@ void pub_marker(const ros::Publisher &pub, float x, float y, float angle)
     msg.pose.orientation.w = cos(angle / 2);
 
     pub.publish(msg);
+}
+
+void found_topic_callback(const std_msgs::String& msg)
+{
+    ROS_INFO_STREAM("I've heard: " << msg.data);
+    found_exit = true;
 }

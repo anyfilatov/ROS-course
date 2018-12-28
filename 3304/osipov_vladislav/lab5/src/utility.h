@@ -21,26 +21,23 @@ void take_pose(
     std::string target_frame_id,
     std::string source_frame_id,
     float &x,
-    float &y)
+    float &y
+    )
 {
     static tf::TransformListener listener;
     tf::StampedTransform transform;
 
     try
     {
-        //ros::Time now = ros::Time::now();
-        //listener.waitForTransform(target_frame_id, source_frame_id, now, ros::Duration(5.0));
         listener.lookupTransform(target_frame_id, source_frame_id, ros::Time(0), transform);
     }
     catch (const tf::TransformException &e)
     {
         ROS_ERROR("%s", e.what());
-        ros::Duration(1.0).sleep();
         throw;
     }
-
-    x = transform.getOrigin().getX();
-    y = transform.getOrigin().getY();
+    x = transform.getOrigin().x();
+    y = transform.getOrigin().y();
 }
 
 float range(float x1, float y1, float x2, float y2)
@@ -50,11 +47,11 @@ float range(float x1, float y1, float x2, float y2)
 
 float calcAngle(float x, float y)
 {
-    if (x == 0)
+    if (fabs(x) < 1e-5)
     {
         return (y < 0 ? -M_PI / 2 : M_PI / 2);
     }
-    if (y == 0)
+    if (fabs(y) < 1e-5)
     {
         return (x < 0 ? M_PI : 0.0);
     }
