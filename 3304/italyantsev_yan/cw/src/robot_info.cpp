@@ -1,8 +1,8 @@
 #include <cmath>
-#include "ros/ros.h"
 #include "robot_info.h"
+#include "ros/ros.h"
 
-RobotInfo::RobotInfo(const std::string& name) : RobotInfo(name, 0.01, 1.0 * M_PI / 180, 0.0, 0.06, 0.06, 0.03)
+RobotInfo::RobotInfo(const std::string& name) : RobotInfo(name, 0.01, 1.0 * M_PI / 180, 0.0, 1.0, 0.1, 0.05)
 {
 }
 
