@@ -9,7 +9,7 @@
 #include <cw/status.h>
 #include "robot_info.h"
 
-enum class State { Chase, Convoy, Final };
+enum class State { Chase, Final };
 
 bool isHooked = false;
 bool Checkpoint1 = false;
@@ -36,6 +36,14 @@ void statusCallback(const cw::status::ConstPtr& message)
     if (message->check3)
     {
         Checkpoint3 = true;
+    }
+    if (message->check4)
+    {
+       Checkpoint4 = true;
+    }
+    if (message->check5)
+    {
+       Checkpoint5 = true;
     }
 }
 
@@ -179,6 +187,14 @@ int main(int argc, char** argv)
                 Checkpoint4 = false;
                 goalX = goalX5;
 		goalY = goalY5;
+
+            }
+	    if (Checkpoint5)
+            {
+                ROS_INFO("Escape point");
+                Checkpoint5 = false;
+                goalX = 10.0;
+		goalY = 10.0;
                 ROS_INFO("You escaped congratulations!");
 		return (1);
             }

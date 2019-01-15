@@ -10,24 +10,20 @@
 #include <cw/picked.h>
 #include "robot_info.h"
 
-enum class State { Chase, Convoy, Waiting, Final };
+enum class State { Chase, Waiting, Final };
 
 bool missionComplete = false;
-bool bonusPicked = false;
-
-void pickedCallback(const cw::picked::ConstPtr& message)
-{
-    if (!message->is_picked)
-    {
-        bonusPicked = true;
-    }
-}
+bool youDied = false;
 
 void statusCallback(const cw::status::ConstPtr& message)
 {
-    if (!message->is_hooked)
+    if (!message->check5)
     {
         missionComplete = true;
+    }
+    if (!message->is_hooked)
+    {
+	youDied = true;
     }
 }
 
@@ -68,7 +64,7 @@ int main(int argc, char** argv)
     tf::Transform finderTransform;
     tf::StampedTransform lostRobotTransform;
     double dx, dy, distance;
-    double hookRange = 0.1;
+    double hookRange = 0.5;
     double pickupRange = 0.5;
     double exitX, exitY;
     State state = State::Chase;
@@ -83,12 +79,10 @@ int main(int argc, char** argv)
     exitY = 10.0;
 
     spawnRobot(node, robot.getName(), "/home/osboxes/.gazebo/models/person_walking/model.sdf", robot.getX(), robot.getY(), 0.0);
-    spawnRobot(node, "exit_point", "/home/osboxes/.gazebo/models/fountain/model.sdf", exitX, exitY, 0.0);
+    spawnRobot(node, "exit_point", "/home/osboxes/.gazebo/models/stop_sign/model.sdf", exitX, exitY, 0.0);
 
     ros::Publisher gazeboPublisher = node.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 10);
     ros::Publisher statusPublisher = node.advertise<cw::status>("/status", 1000);
-    ros::Publisher pickedPublisher = node.advertise<cw::picked>("/picked", 1000);
-    ros::Subscriber pickedSubscriber = node.subscribe("/picked", 10, &pickedCallback);
     ros::Subscriber statusSubscriber = node.subscribe("/status", 10, &statusCallback);
     sleep(1.0);
 
@@ -130,46 +124,48 @@ int main(int argc, char** argv)
             dx = lostRobotTransform.getOrigin().getX();// - robotX;
             dy = lostRobotTransform.getOrigin().getY();// - robotY;
             distance = std::sqrt(dx * dx + dy * dy);
-	    /*if (distance <= pickupRange)
-            {
-                ROS_INFO("Picked");
-                cw::picked pickedMessage;
-                pickedMessage.is_picked = true;
-                pickedPublisher.publish(pickedMessage);
-                ROS_INFO("Bonus");
-            }*/
-	    
-            if (distance <= 0.2)
+	    cw::status statusMessage;
+            if (robot.getX() >= -10.0 && robot.getY() >= -10.0 && distance <= hookRange)
             {
                 ROS_INFO("Pass Check1");
-		cw::status statusMessage;
                 statusMessage.check1 = true;
                 statusPublisher.publish(statusMessage);
             }
-	    if (distance <= 0.4)
+	    if (robot.getX() >= -6.0 && robot.getY() >= -6.0 && distance <= hookRange)
             {
                 ROS_INFO("Pass Check2");
-		cw::status statusMessage;
                 statusMessage.check2 = true;
                 statusPublisher.publish(statusMessage);
                 
             }
-	   if (distance <= 0.6)
+	   if (robot.getX() >= -2.0 && robot.getY() >= -2.0 && distance <= hookRange)
             {
                 ROS_INFO("Pass Check3");
-		cw::status statusMessage;
                 statusMessage.check3 = true;
                 statusPublisher.publish(statusMessage);
                 
             }
-	    if (distance <= 0.8)//statusMessage.check3 != true)
+	    if (robot.getX() >= 2.0 && robot.getY() >= 2.0 && distance <= hookRange)
             {
                 ROS_INFO("Pass Check4");
-		cw::status statusMessage;
                 statusMessage.check4 = true;
                 statusPublisher.publish(statusMessage);
                 
             }
+	    if (robot.getX() >= 6.0 && robot.getY() >= 6.0 && distance <= hookRange)
+            {
+                ROS_INFO("Final point");
+                statusMessage.check5 = true;
+                statusPublisher.publish(statusMessage);
+		return(1);
+		if (missionComplete)
+                {
+                ROS_INFO("Exit");
+                state = State::Final;
+                }
+                
+            }
+	    
 	    
             robot.updatePosition(dx, dy, distance);
             robotState.pose.position.x = robot.getX();
@@ -177,39 +173,7 @@ int main(int argc, char** argv)
             robotState.pose.orientation.z = sin(robot.getCurrentAngle() / 2);
             robotState.pose.orientation.w = cos(robot.getCurrentAngle() / 2);
         }
-        else if (state == State::Convoy)
-        {
-            // move finder robot to exit
-            dx = exitX - robot.getX();
-            dy = exitY - robot.getY();
-            distance = std::sqrt(dx * dx + dy * dy);
-            if (distance <= robot.getDistancePrecision())
-            {
-                ROS_INFO("Waiting...");
-                cw::status statusMessage;
-                statusMessage.is_hooked = true;
-                statusPublisher.publish(statusMessage);
-                sleep(0.5);
-                state = State::Waiting;
-            }
-            else
-            {
-                robot.updatePosition(dx, dy, distance);
-                robotState.pose.position.x = robot.getX();
-                robotState.pose.position.y = robot.getY();
-                robotState.pose.orientation.z = sin(robot.getCurrentAngle() / 2);
-                robotState.pose.orientation.w = cos(robot.getCurrentAngle() / 2);
-            }
-        }
-        else if (state == State::Waiting)
-        {
-            ros::spinOnce();
-            if (missionComplete)
-            {
-                ROS_INFO("Exit");
-                state = State::Final;
-            }
-        }
+
 
         finderTransform.setOrigin(tf::Vector3(robot.getX(), robot.getY(), 0.0));
         finderTransform.setRotation(tf::Quaternion(0,0,-0.7,1));
