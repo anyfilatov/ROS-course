@@ -1,0 +1,6 @@
+<launch>
+<node pkg="lab5" type="search_robot" name="search" output="screen"/>
+<node pkg="lab5" type="lost_robot" name="lost" output="screen"/>
+</launch>
+
+
