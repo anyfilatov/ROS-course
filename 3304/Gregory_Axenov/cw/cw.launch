@@ -1,0 +1,17 @@
+<launch>
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <node pkg="cw" type="lost" name="zombies" output="screen"/>
+  <node pkg="cw" type="bonus" name="supplies" output="screen"/>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+  
+    <arg name="world_name" value="worlds/ahz.world"/> 
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="recording" value="false"/>
+    <arg name="debug" value="false"/>
+    <node name="spawn_zombie" pkg="gazebo_ros" type="spawn_model"
+        args="-file $(find cw)/home/osboxes/.gazebo/models/beer.sdf -x 2 -y 2 -z 1 -unpause -sdf -model beer" respawn="false" output="screen"/>
+
+  </include>
+</launch>
