@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="cw" type="zombies" name="zombie" output="screen"/>
+  <node pkg="cw" type="str" name="supplies" output="screen"/>
+</launch>
