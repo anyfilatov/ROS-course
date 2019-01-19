@@ -64,8 +64,7 @@ int main(int argc, char **argv)
     std::string helper_frame_id = "/helper";
 
     double max_speed = 0.035;
-    const int max_steps = 30;
-    const double da = M_PI / 20;
+    const int turn_count = 30;
     double speed_x = 0.0;
     double speed_y = 0.0;
     double x = 0.0;
@@ -73,9 +72,9 @@ int main(int argc, char **argv)
     double dist = 0.0;
     double new_angle = 0.0;
     double old_angle = 0.0;
-    int steps = 0;
+    int st = 0;
     int k = 30;
-
+	double diff = 1.7;
 
     ros::Rate r(30);
 
@@ -99,15 +98,15 @@ int main(int argc, char **argv)
         new_angle = calc_angle(help_x, help_y);
         if (!is_found)
 		{
-            steps = (steps + 1) % max_steps;
-            if (steps == 1)
+            st = (st + 1) % turn_count;
+            if (st == 1)
             {
                 speed_x = 0.3 * max_speed * (double)(std::rand() % 2);
                 speed_y = 0.3 * max_speed * (double)(std::rand() % 2);
             }
             new_angle = calc_angle(speed_x, speed_y);
 
-            if (dist < 1.8)
+            if (std::abs(help_x) < diff && std::abs(help_y) < diff)
             {
                 is_found = true;
             }

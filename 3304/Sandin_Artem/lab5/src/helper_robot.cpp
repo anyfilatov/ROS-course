@@ -58,7 +58,6 @@ int main(int argc, char *argv[])
     std::string lost_frame_id = "/lost";
 
     const double max_speed = 0.035;
-    const double da = M_PI / 20;
     double speed_x = 0.0;
     double speed_y = 0.0;
     double new_angle = 0.0;
@@ -67,6 +66,7 @@ int main(int argc, char *argv[])
     double y = exit_coord_y;
     double old_angle = 0.0;
 	bool is_found = false;
+	double diff = 1.2;
     ros::Rate r(30);
 
     while (ros::ok())
@@ -85,10 +85,10 @@ int main(int argc, char *argv[])
                     continue;
                 }
 
-                dist = calc_distance(x, y, lost_x + x, lost_y + y);
+                //dist = calc_distance(x, y, lost_x + x, lost_y + y);
                 new_angle = calc_angle(lost_x, lost_y);
                 
-                if (dist > 1)
+                if (std::abs(lost_x) < diff && std::abs(lost_y) < diff)
                 {
                     speed_x = max_speed * cos(new_angle);
                     speed_y = max_speed * sin(new_angle);
