@@ -90,12 +90,12 @@ int main(int argc, char *argv[])
                 
                 if (std::abs(lost_x) < diff && std::abs(lost_y) < diff)
                 {
-                    speed_x = max_speed * cos(new_angle);
-                    speed_y = max_speed * sin(new_angle);
+                    is_found = true;                  
                 }
                 else
                 {
-                    is_found = true;
+		    speed_x = max_speed * cos(new_angle);
+                    speed_y = max_speed * sin(new_angle);
                 }
         }
         else
