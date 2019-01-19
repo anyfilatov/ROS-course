@@ -17,13 +17,13 @@ bool youDied = false;
 
 void statusCallback(const cw::status::ConstPtr& message)
 {
-    if (!message->check5)
+    if (!message->exit)
     {
         missionComplete = true;
     }
     if (!message->is_hooked)
     {
-	youDied = true;
+		youDied = true;
     }
 }
 
@@ -63,10 +63,11 @@ int main(int argc, char** argv)
     tf::TransformListener listener;
     tf::Transform finderTransform;
     tf::StampedTransform lostRobotTransform;
+    tf::StampedTransform zombieTransform;
+    
     double dx, dy, distance;
-    double hookRange = 0.5;
+    double hookRange = 0.6;
     double pickupRange = 0.5;
-    double exitX, exitY;
     State state = State::Chase;
     std::random_device rd;
     std::default_random_engine engine(rd());
@@ -75,11 +76,10 @@ int main(int argc, char** argv)
     RobotInfo robot("finder_robot");
     robot.setPosition(-10.0, -10.0);
 
-    exitX = 10.0;
-    exitY = 10.0;
 
-    spawnRobot(node, robot.getName(), "/home/osboxes/.gazebo/models/person_walking/model.sdf", robot.getX(), robot.getY(), 0.0);
-    spawnRobot(node, "exit_point", "/home/osboxes/.gazebo/models/stop_sign/model.sdf", exitX, exitY, 0.0);
+
+    spawnRobot(node, robot.getName(), "/home/gregory/.gazebo/models/person_walking/model.sdf", robot.getX(), robot.getY(), 0.0);
+
 
     ros::Publisher gazeboPublisher = node.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 10);
     ros::Publisher statusPublisher = node.advertise<cw::status>("/status", 1000);
@@ -101,11 +101,11 @@ int main(int argc, char** argv)
 
     ros::Rate r(30);
     ROS_INFO("Start");
-    while ((state != State::Final) && ros::ok())
+    while ((state != State::Final) && ros::ok() && !youDied)
     {
         if (state == State::Chase)
         {
-            // listen lost pose
+
             try {
                 ros::Time commonTime;
                 std::string error;
@@ -120,60 +120,104 @@ int main(int argc, char** argv)
                 ros::Duration(1.0).sleep();
                 continue;
             }
-            // move finder robot to lost
+
             dx = lostRobotTransform.getOrigin().getX();// - robotX;
             dy = lostRobotTransform.getOrigin().getY();// - robotY;
             distance = std::sqrt(dx * dx + dy * dy);
 	    cw::status statusMessage;
-            if (robot.getX() >= -10.0 && robot.getY() >= -10.0 && distance <= hookRange)
+            if (robot.getX() >= -10.0 && robot.getY() >= -10.0 && distance <= pickupRange)
             {
                 ROS_INFO("Pass Check1");
                 statusMessage.check1 = true;
                 statusPublisher.publish(statusMessage);
+                
             }
-	    if (robot.getX() >= -6.0 && robot.getY() >= -6.0 && distance <= hookRange)
+	    if (robot.getX() >= -6.0 && robot.getY() >= -6.0 && distance <= pickupRange)
             {
                 ROS_INFO("Pass Check2");
                 statusMessage.check2 = true;
                 statusPublisher.publish(statusMessage);
                 
             }
-	   if (robot.getX() >= -2.0 && robot.getY() >= -2.0 && distance <= hookRange)
+	   if (robot.getX() >= -2.0 && robot.getY() >= -2.0 && distance <= pickupRange)
             {
                 ROS_INFO("Pass Check3");
                 statusMessage.check3 = true;
                 statusPublisher.publish(statusMessage);
                 
             }
-	    if (robot.getX() >= 2.0 && robot.getY() >= 2.0 && distance <= hookRange)
+	    if (robot.getX() >= 2.0 && robot.getY() >= 2.0 && distance <= pickupRange)
             {
                 ROS_INFO("Pass Check4");
                 statusMessage.check4 = true;
                 statusPublisher.publish(statusMessage);
                 
             }
-	    if (robot.getX() >= 6.0 && robot.getY() >= 6.0 && distance <= hookRange)
+        if (robot.getX() >= 6.0 && robot.getY() >= 6.0 && distance <= pickupRange)
             {
-                ROS_INFO("Final point");
+                ROS_INFO("Pass Check5");
                 statusMessage.check5 = true;
                 statusPublisher.publish(statusMessage);
-		return(1);
-		if (missionComplete)
-                {
-                ROS_INFO("Exit");
-                state = State::Final;
-                }
                 
             }
-	    
-	    
+	    if (robot.getX() >= 9.0 && robot.getY() >= 9.0 && distance <= pickupRange)
+            {
+                ROS_INFO("Final point");
+                statusMessage.exit = true;
+                statusPublisher.publish(statusMessage);
+				state = State::Final;
+				if (missionComplete)
+				        {
+				        ROS_INFO("Exit");
+				        state = State::Final;
+				        }
+                
+            }
+	    	
+			
+			double dx1, dy1;
+	    	for (int i = 1; i < 5; i++) {
+
+	    	std::string zombieName = "zombies" + std::to_string(i);
+	    	
+				try {
+		            ros::Time commonTime;
+		            std::string error;
+		            listener.waitForTransform("finder_robot", zombieName, ros::Time(0), ros::Duration(1.0));
+		            listener.getLatestCommonTime("finder_robot", zombieName, commonTime, &error);
+		            listener.lookupTransform("finder_robot", zombieName, ros::Time(0), zombieTransform);
+		        }
+		        catch (tf::TransformException &ex)
+		        {
+		            ROS_ERROR("%s",ex.what());
+		            gazeboPublisher.publish(robotState);
+		            ros::Duration(1.0).sleep();
+		            continue;
+		        }
+		        
+		        dx1 = zombieTransform.getOrigin().getX();
+            	dy1 = zombieTransform.getOrigin().getY();
+            	
+	    		cw::status statusMessage; 
+            
+		        if (std::abs(dx1) < hookRange && std::abs(dy1) < hookRange)
+		        {
+		            ROS_INFO("Lumpen has hooked you");
+		            statusMessage.is_hooked = true;
+		            
+		            statusPublisher.publish(statusMessage);
+		            ros::Duration(1.0).sleep();
+		            youDied =true;
+		            
+		        }
+            }
+	   
             robot.updatePosition(dx, dy, distance);
             robotState.pose.position.x = robot.getX();
             robotState.pose.position.y = robot.getY();
             robotState.pose.orientation.z = sin(robot.getCurrentAngle() / 2);
             robotState.pose.orientation.w = cos(robot.getCurrentAngle() / 2);
         }
-
 
         finderTransform.setOrigin(tf::Vector3(robot.getX(), robot.getY(), 0.0));
         finderTransform.setRotation(tf::Quaternion(0,0,-0.7,1));

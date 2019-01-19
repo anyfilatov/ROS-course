@@ -17,7 +17,7 @@ bool Checkpoint2 = false;
 bool Checkpoint3 = false;
 bool Checkpoint4 = false;
 bool Checkpoint5 = false;
-
+bool isExit = false;
 
 void statusCallback(const cw::status::ConstPtr& message)
 {
@@ -45,15 +45,12 @@ void statusCallback(const cw::status::ConstPtr& message)
     {
        Checkpoint5 = true;
     }
+    if (message->exit)
+    {
+       isExit = true;
+    }
 }
 
-/*void RemoveModel (ModelPtr _model)
-{
-    if (_model)	
-    {
-    this->RemoveModel(_model->GetName());
-    }
-}*/
 
 void spawnRobot(ros::NodeHandle& node, const std::string& name, const std::string& model_path, double x, double y, double z)
 {
@@ -94,6 +91,7 @@ int main(int argc, char** argv)
     double dx, dy, distance;
     double goalX, goalY, goalX2, goalY2, goalX3, goalY3, goalX4, goalY4, goalX5, goalY5;
     double hookRange = 0.5;
+    double exitX, exitY;
     State state = State::Chase;
     std::random_device rd;
     std::default_random_engine engine(rd());
@@ -106,8 +104,8 @@ int main(int argc, char** argv)
     std::uniform_real_distribution<> uniform_dist_y3(-2.0, 2.0);
     std::uniform_real_distribution<> uniform_dist_x4(2.0, 6.0);
     std::uniform_real_distribution<> uniform_dist_y4(2.0, 6.0);
-    std::uniform_real_distribution<> uniform_dist_x5(6.0, 10.0);
-    std::uniform_real_distribution<> uniform_dist_y5(6.0, 10.0);
+    std::uniform_real_distribution<> uniform_dist_x5(6.0, 8.0);
+    std::uniform_real_distribution<> uniform_dist_y5(9.5, 10.0);
 
     // generate robot
     RobotInfo robot("bonus");
@@ -126,11 +124,16 @@ int main(int argc, char** argv)
     goalX5 = uniform_dist_x5(engine);
     goalY5 = uniform_dist_y5(engine);
 
-    spawnRobot(node, robot.getName(), "/home/osboxes/.gazebo/models/beer/model.sdf", goalX,  goalY, 0.0);
-    spawnRobot(node, robot2.getName(), "/home/osboxes/.gazebo/models/beer/model.sdf", goalX2,  goalY2, 0.0);
-    spawnRobot(node, robot3.getName(), "/home/osboxes/.gazebo/models/beer/model.sdf", goalX3,  goalY3, 0.0);
-    spawnRobot(node, robot4.getName(), "/home/osboxes/.gazebo/models/beer/model.sdf", goalX4,  goalY4, 0.0);
-    spawnRobot(node, robot5.getName(), "/home/osboxes/.gazebo/models/beer/model.sdf", goalX5,  goalY5, 0.0);
+    spawnRobot(node, robot.getName(), "/home/gregory/.gazebo/models/beer/model.sdf", goalX,  goalY, 0.0);
+    spawnRobot(node, robot2.getName(), "/home/gregory/.gazebo/models/beer/model.sdf", goalX2,  goalY2, 0.0);
+    spawnRobot(node, robot3.getName(), "/home/gregory/.gazebo/models/beer/model.sdf", goalX3,  goalY3, 0.0);
+    spawnRobot(node, robot4.getName(), "/home/gregory/.gazebo/models/beer/model.sdf", goalX4,  goalY4, 0.0);
+    spawnRobot(node, robot5.getName(), "/home/gregory/.gazebo/models/beer/model.sdf", goalX5,  goalY5, 0.0);
+    
+    exitX = 10.0;
+    exitY = 10.0;
+
+    spawnRobot(node, "exit_point", "/home/gregory/.gazebo/models/stop_sign/model.sdf", exitX, exitY, 0.0);
 
     ros::Publisher gazeboPublisher = node.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 10);
     ros::Publisher statusPublisher = node.advertise<cw::status>("/status", 1000);
@@ -152,8 +155,10 @@ int main(int argc, char** argv)
 
     ros::Rate rate(30);
     ROS_INFO("Start");
+    gazeboPublisher.publish(robotState);
     while ((state != State::Final) && ros::ok())
-    {
+    {	
+    	
         if (state == State::Chase)
         {
             ros::spinOnce();
@@ -161,43 +166,61 @@ int main(int argc, char** argv)
             if (Checkpoint1)
             {
                 ROS_INFO("Checkpoint 1");
-		Checkpoint1 = false; 
-		goalX = goalX2;
-		goalY = goalY2;
-		//RemoveModel("bonus");
-		//ros::Duration(5).sleep();
+				Checkpoint1 = false; 
+				goalX = goalX2;
+				goalY = goalY2;
+				robotState.model_name = "bonus";
+				robotState.pose.position.z = 1000;				
+				gazeboPublisher.publish(robotState);
             }
             if (Checkpoint2)
             {
                 ROS_INFO("Checkpoint 2");
                 Checkpoint2 = false;
-		goalX = goalX3;
-		goalY = goalY3;
+				goalX = goalX3;
+				goalY = goalY3;
+				robotState.model_name = "bonus2";
+				robotState.pose.position.z = 1000;
+				gazeboPublisher.publish(robotState);
             } 
 	    if (Checkpoint3)
             {
                 ROS_INFO("Checkpoint 3");
                 Checkpoint3 = false;
-		goalX = goalX4;
-		goalY = goalY4;
+				goalX = goalX4;
+				goalY = goalY4;
+				robotState.model_name = "bonus3";
+				robotState.pose.position.z = 1000;
+				gazeboPublisher.publish(robotState);
             }
             if (Checkpoint4)
             {
                 ROS_INFO("Checkpoint 4");
                 Checkpoint4 = false;
                 goalX = goalX5;
-		goalY = goalY5;
-
+				goalY = goalY5;			
+				robotState.model_name = "bonus4";
+				robotState.pose.position.z = 1000;
+				gazeboPublisher.publish(robotState);
             }
 	    if (Checkpoint5)
             {
-                ROS_INFO("Escape point");
+                ROS_INFO("Checkpoint 5");
                 Checkpoint5 = false;
-                goalX = 10.0;
-		goalY = 10.0;
-                ROS_INFO("You escaped congratulations!");
-		return (1);
+                goalX = exitX;
+				goalY = exitY;
+				robotState.model_name = "bonus5";
+				robotState.pose.position.z = 1000;
+				gazeboPublisher.publish(robotState);
             }
+        if (isExit)
+        {
+            ROS_INFO("Escape point");
+            Checkpoint5 = false;
+            ROS_INFO("You escaped congratulations!");
+            ros::Duration(1.0).sleep();
+			state = State::Final;
+        }
 	     
         }
 
@@ -206,8 +229,7 @@ int main(int argc, char** argv)
         strayRobotTransform.setRotation(tf::Quaternion(0,0,0,1));
         broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "bonus"));
 
-        gazeboPublisher.publish(robotState);
-
+ 
         rate.sleep();
     }
     return 0;

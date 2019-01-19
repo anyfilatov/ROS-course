@@ -95,14 +95,14 @@ int main(int argc, char** argv)
 
 
     	
-	spawnRobot(node, "necromancer1", "/home/osboxes/.gazebo/models/dumpster/model.sdf", -11.0, 11.0, 0.0);
-	spawnRobot(node, "necromancer2", "/home/osboxes/.gazebo/models/dumpster/model.sdf", 0.0, 11.0, 0.0);
-	spawnRobot(node, "necromancer3", "/home/osboxes/.gazebo/models/dumpster/model.sdf", 0.0, -11.0, 0.0);
-	spawnRobot(node, "necromancer4", "/home/osboxes/.gazebo/models/dumpster/model.sdf", 11.0, 0.0, 0.0);
-	spawnRobot(node, "zombies1", "/home/osboxes/.gazebo/models/person_standing/model.sdf", -9.0, 9.0, 0.0);
-	spawnRobot(node, "zombies2", "/home/osboxes/.gazebo/models/person_standing/model.sdf", 0.0, 9.0, 0.0);
-	spawnRobot(node, "zombies3", "/home/osboxes/.gazebo/models/person_standing/model.sdf", 0.0, -9.0, 0.0);
-	spawnRobot(node, "zombies4", "/home/osboxes/.gazebo/models/person_standing/model.sdf", 9.0, 0.0, 0.0);
+	spawnRobot(node, "necromancer1", "/home/gregory/.gazebo/models/dumpster/model.sdf", -11.0, 11.0, 0.0);
+	spawnRobot(node, "necromancer2", "/home/gregory/.gazebo/models/dumpster/model.sdf", 0.0, 11.0, 0.0);
+	spawnRobot(node, "necromancer3", "/home/gregory/.gazebo/models/dumpster/model.sdf", 0.0, -11.0, 0.0);
+	spawnRobot(node, "necromancer4", "/home/gregory/.gazebo/models/dumpster/model.sdf", 11.0, 0.0, 0.0);
+	spawnRobot(node, "zombies1", "/home/gregory/.gazebo/models/person_standing/model.sdf", -9.0, 9.0, 0.0);
+	spawnRobot(node, "zombies2", "/home/gregory/.gazebo/models/person_standing/model.sdf", 0.0, 9.0, 0.0);
+	spawnRobot(node, "zombies3", "/home/gregory/.gazebo/models/person_standing/model.sdf", 0.0, -9.0, 0.0);
+	spawnRobot(node, "zombies4", "/home/gregory/.gazebo/models/person_standing/model.sdf", 9.0, 0.0, 0.0);
 
     ros::Publisher gazeboPublisher = node.advertise<gazebo_msgs::ModelState>("gazebo/set_model_state", 10);
     ros::Publisher statusPublisher = node.advertise<cw::status>("/status", 1000);
@@ -137,15 +137,18 @@ int main(int argc, char** argv)
 
     strayRobotTransform.setOrigin(tf::Vector3(robot1.getX(), robot1.getY(), 0.0));
     strayRobotTransform.setRotation(tf::Quaternion(0,0,0,1));
+    broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies1"));
+    
     strayRobotTransform.setOrigin(tf::Vector3(robot2.getX(), robot2.getY(), 0.0));
     strayRobotTransform.setRotation(tf::Quaternion(0,0,0,1));
+    broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies2"));
+    
     strayRobotTransform.setOrigin(tf::Vector3(robot3.getX(), robot3.getY(), 0.0));
     strayRobotTransform.setRotation(tf::Quaternion(0,0,0,1));
+    broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies3"));
+    
     strayRobotTransform.setOrigin(tf::Vector3(robot4.getX(), robot4.getY(), 0.0));
     strayRobotTransform.setRotation(tf::Quaternion(0,0,0,1));
-    broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies1"));
-    broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies2"));
-    broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies3"));
     broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies4"));
 
     ros::Rate rate(30);
@@ -154,7 +157,7 @@ int main(int argc, char** argv)
     {
         if (state == State::Chase)
         {
-            ros::spinOnce();
+         	ros::spinOnce();   
             // randomMove
             if (isHooked)
             {
@@ -164,23 +167,24 @@ int main(int argc, char** argv)
             }
             else
             {
-                //ROS_INFO("coords: (%f, %f)", robotX, robotY);
                 dx1 = goalX1 - robot1.getX();
                 dy1 = goalY1 - robot1.getY();
                 distance1 = std::sqrt(dx1 * dx1 + dy1 * dy1);
-		dx2 = goalX2 - robot2.getX();
+				dx2 = goalX2 - robot2.getX();
                 dy2 = goalY2 - robot2.getY();
                 distance2 = std::sqrt(dx2 * dx2 + dy2 * dy2);
-		dx3 = goalX3 - robot3.getX();
+				dx3 = goalX3 - robot3.getX();
                 dy3 = goalY3 - robot3.getY();
                 distance3 = std::sqrt(dx3 * dx3 + dy3 * dy3);
-		dx4 = goalX4 - robot4.getX();
+				dx4 = goalX4 - robot4.getX();
                 dy4 = goalY4 - robot4.getY();
                 distance4 = std::sqrt(dx4 * dx4 + dy4 * dy4);
+                
                 if (distance1 <= robot1.getDistancePrecision())
                 {
                     goalX1 = uniform_dist_x1(engine);
                     goalY1 = uniform_dist_y1(engine);
+                    
                 }
                 else
                 {	
@@ -189,73 +193,83 @@ int main(int argc, char** argv)
                     robotState1.pose.position.y = robot1.getY();
                     robotState1.pose.orientation.z = sin(robot1.getCurrentAngle() / 2);
                     robotState1.pose.orientation.w = cos(robot1.getCurrentAngle() / 2);
-		    
-		    rate.sleep();	
-		}	
-		if (distance2 <= robot2.getDistancePrecision())
-                {
-                    goalX2 = uniform_dist_x2(engine);
-                    goalY2 = uniform_dist_y2(engine);
-                }
-		else
-		{
-		    robot2.updatePosition(dx2, dy2, distance2);
-                    robotState2.pose.position.x = robot2.getX();
-                    robotState2.pose.position.y = robot2.getY();
-                    robotState2.pose.orientation.z = sin(robot2.getCurrentAngle() / 2);
-                    robotState2.pose.orientation.w = cos(robot2.getCurrentAngle() / 2);
-		}
-		if (distance3 <= robot3.getDistancePrecision())
-                {
-                    goalX3 = uniform_dist_x3(engine);
-                    goalY3 = uniform_dist_y3(engine);
-                }
-		else
-		{
-		    robot3.updatePosition(dx3, dy3, distance3);
-                    robotState3.pose.position.x = robot3.getX();
-                    robotState3.pose.position.y = robot3.getY();
-                    robotState3.pose.orientation.z = sin(robot3.getCurrentAngle() / 2);
-                    robotState3.pose.orientation.w = cos(robot3.getCurrentAngle() / 2);
-		}
-		if (distance4 <= robot4.getDistancePrecision())
-                {
-                    goalX4 = uniform_dist_x4(engine);
-                    goalY4 = uniform_dist_y4(engine);
-                }
-		else
-		{
-		    robot4.updatePosition(dx4, dy4, distance4);
-                    robotState4.pose.position.x = robot4.getX();
-                    robotState4.pose.position.y = robot4.getY();
-                    robotState4.pose.orientation.z = sin(robot4.getCurrentAngle() / 2);
-                    robotState4.pose.orientation.w = cos(robot4.getCurrentAngle() / 2);
-		}
-               
-            }
+		    		rate.sleep();	
+		        }	
+				
+				if (distance2 <= robot2.getDistancePrecision())
+				        {
+				            goalX2 = uniform_dist_x2(engine);
+				            goalY2 = uniform_dist_y2(engine);
+				            
+				        }
+				else
+				{
+					robot2.updatePosition(dx2, dy2, distance2);
+				            robotState2.pose.position.x = robot2.getX();
+				            robotState2.pose.position.y = robot2.getY();
+				            robotState2.pose.orientation.z = sin(robot2.getCurrentAngle() / 2);
+				            robotState2.pose.orientation.w = cos(robot2.getCurrentAngle() / 2);
+				}
+				if (distance3 <= robot3.getDistancePrecision())
+				        {
+				            goalX3 = uniform_dist_x3(engine);
+				            goalY3 = uniform_dist_y3(engine);
+				            
+				        }
+				else
+				{
+					robot3.updatePosition(dx3, dy3, distance3);
+				            robotState3.pose.position.x = robot3.getX();
+				            robotState3.pose.position.y = robot3.getY();
+				            robotState3.pose.orientation.z = sin(robot3.getCurrentAngle() / 2);
+				            robotState3.pose.orientation.w = cos(robot3.getCurrentAngle() / 2);
+				}
+				if (distance4 <= robot4.getDistancePrecision())
+				        {
+				            goalX4 = uniform_dist_x4(engine);
+				            goalY4 = uniform_dist_y4(engine);
+				            
+				        }
+				else
+				{
+					robot4.updatePosition(dx4, dy4, distance4);
+				            robotState4.pose.position.x = robot4.getX();
+				            robotState4.pose.position.y = robot4.getY();
+				            robotState4.pose.orientation.z = sin(robot4.getCurrentAngle() / 2);
+				            robotState4.pose.orientation.w = cos(robot4.getCurrentAngle() / 2);
+				}
+				       
+				    }
 
-        }
+				}
 
 
         strayRobotTransform.setOrigin(tf::Vector3(robot1.getX(), robot1.getY(), 0.0));
     	strayRobotTransform.setRotation(tf::Quaternion(0,0,0,1));
+    	broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies1"));
+    	
+    	
     	strayRobotTransform.setOrigin(tf::Vector3(robot2.getX(), robot2.getY(), 0.0));
     	strayRobotTransform.setRotation(tf::Quaternion(0,0,0,1));
+    	broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies2"));
+    	
     	strayRobotTransform.setOrigin(tf::Vector3(robot3.getX(), robot3.getY(), 0.0));
     	strayRobotTransform.setRotation(tf::Quaternion(0,0,0,1));
+    	broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies3"));
+    	
     	strayRobotTransform.setOrigin(tf::Vector3(robot4.getX(), robot4.getY(), 0.0));
     	strayRobotTransform.setRotation(tf::Quaternion(0,0,0,1));
-        broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies1"));
-	broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies2"));
-        broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies3"));
         broadcaster.sendTransform(tf::StampedTransform(strayRobotTransform, ros::Time::now(), "world", "zombies4"));
 
         gazeboPublisher.publish(robotState1);
-	gazeboPublisher.publish(robotState2);
-	gazeboPublisher.publish(robotState3);
-	gazeboPublisher.publish(robotState4);
 
-        rate.sleep();
+		gazeboPublisher.publish(robotState2);
+		gazeboPublisher.publish(robotState3);
+		gazeboPublisher.publish(robotState4);
+		
+		rate.sleep();
+		
+        
     }
     return 0;
 } 

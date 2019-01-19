@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    status.msg
-   picked.msg
  )
 
 ## Generate added messages and services with any dependencies listed here
